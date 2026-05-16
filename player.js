@@ -34,7 +34,6 @@
             playerContainer.style.setProperty('visibility', 'visible', 'important');
             playerContainer.style.setProperty('opacity', '1', 'important');
 
-            // Mantém a classe 'has-player-tooltip' APENAS no progress-bar-root e no volume-slider
             playerContainer.innerHTML = [
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização -->',
@@ -42,8 +41,8 @@
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
-                        '<!-- MANTIDO: Barra de Progresso Customizada Original com Tooltip -->',
-                        '<div class="custom-progress-bar-container has-player-tooltip" id="progress-bar-root" data-tooltip="Linha do Tempo / Timeline">',
+                        '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico -->',
+                        '<div class="custom-progress-bar-container dynamic-player-tooltip" id="progress-bar-root">',
                             '<div class="progress-bar-buffered" id="progress-buffered"></div>',
                             '<div class="progress-bar-fill" id="progress-fill"></div>',
                             '<div class="progress-bar-handle" id="progress-handle"></div>',
@@ -53,25 +52,24 @@
                                 '<button id="btn-player-play" aria-label="Play/Pause" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
                                 '</button>',
-                                '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar">',
+                                '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar (Stop)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>',
                                 '</button>',
                                 '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
-                                '</button>',
+                                </button>',
                                 '<button id="btn-player-forward" aria-label="Avançar 10s" class="player-btn" title="Avançar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>',
-                                </button>',
+                                '</button>',
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
                                 '</button>',
-                                '<!-- Controle de Volume -->',
-                                '<div class="volume-control-wrapper">',
+                                '<!-- Controle de Volume com Tooltip Dinâmico -->',
+                                '<div class="volume-control-wrapper dynamic-player-tooltip" id="volume-tooltip-root">',
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
                                     '</button>',
-                                    '<!-- MANTIDO: Controle Deslizante com Tooltip -->',
-                                    '<input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="volume-slider-bar has-player-tooltip" data-tooltip="Ajustar Volume / Adjust Volume">',
+                                    '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
                                 '</div>',
                                 '<div class="time-display-container" id="time-display-click-root" style="cursor:pointer; user-select:none;">',
                                     '<span id="player-time-display">00:00:00 / 00:00:00</span>',
@@ -146,6 +144,7 @@
             const volumeSlider = playerContainer.querySelector('#volume-slider');
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
+            const volumeTooltipRoot = playerContainer.querySelector('#volume-tooltip-root');
             
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
             const progressFill = playerContainer.querySelector('#progress-fill');
@@ -171,6 +170,7 @@
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
+            // Play / Pause
             btnPlay.addEventListener('click', function() {
                 if (videoElement.paused || videoElement.ended) {
                     videoElement.play().then(function() { btnPlay.innerHTML = svgPause; });
@@ -206,6 +206,37 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
+            // INTERAÇÃO DO TOOLTIP DA BARRA DE PROGRESSO (CALCULA TEMPO REAL FORMATADO AO PASSAR O MOUSE)
+            progressRoot.addEventListener('mousemove', function(e) {
+                if (!videoElement.duration) return;
+                const rect = progressRoot.getBoundingClientRect();
+                let pct = (e.clientX - rect.left) / rect.width;
+                pct = Math.min(Math.max(pct, 0), 1);
+                
+                const timeAtCursor = pct * videoElement.duration;
+                const formattedTime = window.VideoPlayerManager.formatTime(timeAtCursor);
+                
+                progressRoot.setAttribute('data-player-tooltip-content', formattedTime);
+                
+                // Centraliza a caixinha horizontalmente em cima do cursor do mouse
+                const relativeX = e.clientX - rect.left;
+                progressRoot.style.setProperty('--tooltip-x', relativeX + 'px');
+            });
+
+            // INTERAÇÃO DO TOOLTIP DE VOLUME (CALCULA PORCENTAGEM DINÂMICA AO PASSAR O MOUSE)
+            volumeSlider.addEventListener('mousemove', function(e) {
+                const rect = volumeSlider.getBoundingClientRect();
+                let pct = (e.clientX - rect.left) / rect.width;
+                pct = Math.min(Math.max(pct, 0), 1);
+                
+                const percentage = Math.round(pct * 100) + "%";
+                volumeTooltipRoot.setAttribute('data-player-tooltip-content', percentage);
+                
+                // Posiciona alinhado ao cursor dentro do container de volume
+                const relativeX = e.clientX - rect.left + 36; // 36px compensa o espaço do botão Mute à esquerda
+                volumeTooltipRoot.style.setProperty('--tooltip-x', relativeX + 'px');
+            });
+
             btnExpandLightbox.addEventListener('click', function() {
                 if (!videoElement || !window.LightboxManager) return;
                 try {
@@ -239,6 +270,10 @@
                 window.VideoPlayerManager.updateVolumeIcon();
                 localStorage.setItem('player-setting-volume', vol);
                 localStorage.setItem('player-setting-muted', vol === 0 ? 'true' : 'false');
+                
+                // Atualiza o valor numérico do tooltip imediatamente durante o arraste físico
+                const percentage = Math.round(vol * 100) + "%";
+                volumeTooltipRoot.setAttribute('data-player-tooltip-content', percentage);
             });
 
             btnMute.addEventListener('click', function() {
