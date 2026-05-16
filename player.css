@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. CONTAINER DO PLAYER FIXO E PARÂMETROS DE TRANSBORDO
+   1. CONTAINER DO PLAYER FIXO E PARÂMETROS DE TRANSBORDO (ANTI-ESTOURO)
    ========================================================================== */
 .player-fixed-bottom {
     position: fixed;
@@ -13,6 +13,7 @@
     padding: 1rem 2rem;
     animation: playerSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: visible !important; /* CRÍTICO: Permite que os previews flutuem para fora */
+    box-sizing: border-box;
 }
 
 @keyframes playerSlideUp {
@@ -24,6 +25,7 @@
     width: 100%;
     display: flex;
     overflow: visible !important;
+    box-sizing: border-box;
 }
 
 .player-wrapper {
@@ -88,6 +90,9 @@
     border-radius: 0.375rem;
     display: flex;
     flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .player-btn:hover,
@@ -382,7 +387,7 @@
     flex-direction: column !important;
     justify-content: space-between !important;
     box-sizing: border-box !important;
-    z-index: 2147483647 !important; /* Camada suprema absoluta */
+    z-index: 2147483647 !important; 
 }
 
 #custom-player-container::backdrop {
@@ -459,22 +464,96 @@
 }
 
 /* ==========================================================================
-   8. MEDIA QUERY INDUSTRIAL: RESPONSIVIDADE ERGONÔMICA NO MOBILE
+   8. MEDIA QUERY INDUSTRIAL: RESPONSIVIDADE ERGONÔMICA NO MOBILE (BLINDADO)
    ========================================================================== */
 @media (max-width: 768px) {
-    .player-wrapper { flex-direction: column; gap: 0.75rem; }
-    .player-video-viewport { width: 100%; max-width: 240px; }
-    .controls-row { flex-direction: column; gap: 0.75rem; }
+    /* Garante recuo na base para o player empilhado verticalmente não cobrir as tabelas */
+    body {
+        padding-bottom: 280px !important;
+    }
 
+    /* Reduz espaçamentos para extrair mais área útil nas bordas do celular */
+    .player-fixed-bottom {
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Transforma o alinhamento mestre de linha única para coluna vertical flexível */
+    .player-wrapper {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Ajusta a miniatura do vídeo de forma centralizada e estável na base flex */
+    .player-video-viewport {
+        width: 100% !important;
+        max-width: 220px !important;
+        aspect-ratio: 16 / 9 !important;
+    }
+
+    /* Divide a linha de botões em blocos fluidos paralelos */
+    .controls-row {
+        flex-direction: column !important;
+        gap: 0.85rem !important;
+        width: 100% !important;
+    }
+
+    /* Distribui os botões principais de forma justa ocupando a largura total do visor */
+    .controls-left, 
+    .controls-right {
+        width: 100% !important;
+        justify-content: space-between !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Amplia a área ativa de toque dos botões para evitar cliques errados no celular */
+    .player-btn {
+        padding: 0.6rem !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+
+    /* Oculta o input de arraste do volume (slider) no mobile para mitigar erros de touch */
+    .volume-slider-bar {
+        display: none !important;
+    }
+
+    /* Isola o contador de tempo de forma limpa */
+    .time-display-container {
+        margin-left: 0 !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Força o menu flutuante de velocidade a abrir centralizado no celular */
     .player-speed-dropdown-list {
-        right: 50%;
-        transform: translateX(50%);
+        right: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: calc(100% + 8px) !important;
     }
     
     .player-speed-menu-wrapper.menu-open .player-speed-dropdown-list {
-        transform: translateX(50%) translateY(0);
+        transform: translateX(-50%) translateY(0) !important;
+    }
+
+    /* Desativa tooltips de movimento de ponteiro (hover) já que mobile não possui cursor */
+    .custom-progress-bar-container .timeline-preview-box,
+    .slider-tooltip-container.dynamic-volume-tooltip::after {
+        display: none !important;
+        opacity: 0 !important;
     }
 }
+
+/* Tratamento fino extra para telas ultra-estreitas (Ex: iPhone SE) */
+@media (max-width: 380px) {
+    .time-display-container {
+        font-size: 0.75rem !important;
+    }
+    .player-btn {
+        padding: 0.5rem !important;
+    }
+}
+
 
 
 
