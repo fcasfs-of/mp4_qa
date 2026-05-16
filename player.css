@@ -42,7 +42,7 @@
 }
 
 /* ==========================================================================
-   2. VIEWPORT VISUAL E BOTÕES FLUTUANTES NO CANTO INFERIOR ESQUERDO (FOCUS MODE)
+   2. VIEWPORT VISUAL PADRÃO E BOTÕES FLUTUANTES NO VÍDEO
    ========================================================================== */
 .player-video-viewport {
     position: relative; /* Base de ancoragem fixa para os botões flutuantes */
@@ -54,18 +54,16 @@
     border: 1px solid #334155;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
-                height 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
-                margin 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .player-video-viewport video {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Mantém a proporção original perfeita no modo miniatura padrão */
+    object-fit: contain; /* Mantém a proporção perfeita original */
 }
 
-/* BOTÕES FLUTUANTES INTEGRADOS À TELA */
+/* BOTÃO FLUTUANTE DE EXPANSÃO (EMBUTIDO NA TELA) */
 .viewport-floating-action-btn {
     position: absolute;
     bottom: 8px;
@@ -96,44 +94,6 @@
     color: #ffffff !important;
     border-color: #06b6d4;
     transform: scale(1.05);
-}
-
-/* ==========================================================================
-   ESTADO REATIVO: DESTAQUE DE CINEMA EM TELA CHEIA HORIZONTAL (SEM TRAVA FIXA)
-   ========================================================================== */
-.player-video-viewport.mode-viewport-expanded {
-    position: relative !important; /* Libera o elemento para acompanhar o scroll natural */
-    width: 100vw !important; /* Força o destaque a ocupar 100% da largura horizontal */
-    height: 70vh !important; /* Altura cinemática imersiva ideal para o foco */
-    max-height: 600px !important;
-    background-color: #090d16 !important; /* Fundo escuro de teatro premium */
-    z-index: 998 !important;
-    border-radius: 0px !important;
-    border: none !important;
-    border-bottom: 2px solid #06b6d4 !important; /* Linha de destaque inferior em ciano */
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-    
-    /* Quebra os limites do grid central do site para esticar de ponta a ponta na janela */
-    margin-left: calc(-50vw + 50%) !important;
-    margin-right: calc(-50vw + 50%) !important;
-    left: 50% !important;
-    right: 50% !important;
-    transform: translateX(-50%) !important;
-}
-
-/* O VÍDEO INTERNE NÃO É ESTICADO (FIT) E PREENCHE O OBJETO MANTENDO O TAMANHO REAL */
-.player-video-viewport.mode-viewport-expanded video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important; /* Mantém o formato e proporção nativa sem cortes laterais ou distorções */
-}
-
-/* Ajusta a posição do botão quando o modo destaque de cinema estiver ativo */
-.player-video-viewport.mode-viewport-expanded .viewport-floating-action-btn {
-    bottom: 16px !important;
-    left: 16px !important;
-    background-color: rgba(15, 23, 42, 0.9) !important;
-    border-color: #06b6d4 !important;
 }
 
 /* ==========================================================================
@@ -372,8 +332,8 @@
 }
 
 /* ==========================================================================
-   6. BLINDAGEM DE TELA CHEIA MONITORES (FULLSCREEN MANAGER)
-   ========================================================================== */
+   6. BLINDAGEM DE TELA CHEIA MONITORES (FULLSCREEN MANAGER NATIVO)
+   ========================================================================= */
 #custom-player-container:fullscreen,
 #custom-player-container:-webkit-full-screen {
     width: 100vw !important;
@@ -445,7 +405,7 @@
     .player-video-viewport { width: 100%; max-width: 240px; }
     .controls-row { flex-direction: column; gap: 0.75rem; }
 
-    /* Força botões flutuantes a permanecerem visíveis (mobile não possui hover de mouse) */
+    /* Força os botões flutuantes a permanecerem visíveis (mobile não possui hover) */
     .viewport-floating-action-btn {
         opacity: 1 !important;
         padding: 10px !important; 
@@ -453,15 +413,7 @@
         min-height: 42px !important;
         background-color: rgba(15, 23, 42, 0.9) !important;
     }
-    
-    /* No mobile, o destaque se ajusta de forma mais compacta na proporção vertical do celular */
-    .player-video-viewport.mode-viewport-expanded {
-        height: 45vh !important;
-        min-height: 280px !important;
-    }
 }
-
-
 
 
 
