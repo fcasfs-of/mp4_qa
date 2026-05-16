@@ -1,4 +1,4 @@
-(function() {
+(GridVp = function() {
     let playerContainer = null;
     let videoElement = null;
     let previewVideoElement = null; // Vídeo fantasma em memória para renderizar previews na linha do tempo
@@ -81,7 +81,7 @@
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
                                     '</button>',
-                                    '<!-- Contêiner pai preparado para renderizar o tooltip flutuante sem quebras por cima -->',
+                                    '<!-- Contêiner pai preparado para renderizar o tooltip flutuante por coordenadas -->',
                                     '<div class="slider-tooltip-container dynamic-volume-tooltip" id="volume-slider-wrapper">',
                                         '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
                                     '</div>',
@@ -200,17 +200,26 @@
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
-            // GATILHO CORRIGIDO: TELA CHEIA INTEGRAL DO NAVEGADOR (FIXED REAL FULL SCREEN)
+            // LOGICA CORRIGIDA: DESTAQUE DE CINEMA EM TELA CHEIA (SEM TRAVAS FIXED)
             btnVpExpand.addEventListener('click', function(e) {
                 viewport.classList.add('mode-viewport-expanded');
                 btnVpExpand.style.setProperty('display', 'none', 'important');
                 btnVpCompress.style.setProperty('display', 'flex', 'important');
+                
+                // Executa a focagem visual e centraliza a tela no show do vídeo expandido
+                setTimeout(function() {
+                    viewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
             });
 
             btnVpCompress.addEventListener('click', function(e) {
                 viewport.classList.remove('mode-viewport-expanded');
                 btnVpCompress.style.setProperty('display', 'none', 'important');
                 btnVpExpand.style.setProperty('display', 'flex', 'important');
+                
+                setTimeout(function() {
+                    viewport.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 50);
             });
 
             btnPlay.addEventListener('click', function() {
