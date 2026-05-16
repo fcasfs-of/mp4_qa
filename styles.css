@@ -318,3 +318,46 @@ img {
     text-align: right;
     word-break: break-word;
 }
+
+
+/* ==========================================================================
+   BARRA DE ROLAGEM (SCROLLBAR) PROFISSIONAL PREMIUM - CROSS-BROWSER
+   ========================================================================== */
+
+/* 1. Motores Modernos (Chrome, Safari, Edge, Opera e iOS/Android) */
+::-webkit-scrollbar {
+    width: 10px;               /* Largura da barra vertical */
+    height: 10px;              /* Altura da barra horizontal */
+}
+
+/* O trilho por onde a barra desliza (Track) */
+::-webkit-scrollbar-track {
+    background-color: var(--bg-main, #0f172a); /* Herda o fundo escuro/claro do seu app */
+    border-radius: 100px;
+}
+
+/* O indicador deslizante que o usuário arrasta (Thumb) */
+::-webkit-scrollbar-thumb {
+    background-color: #334155; /* Cor cinza slate premium fosco */
+    border-radius: 100px;      /* Cantos 100% arredondados em formato pílula */
+    border: 2px solid var(--bg-main, #0f172a); /* Cria um espaçamento elegante nas bordas */
+    transition: background-color 0.2s ease;
+}
+
+/* Feedback visual reativo ao passar o mouse por cima (Hover) */
+::-webkit-scrollbar-thumb:hover {
+    background-color: #06b6d4; /* Muda cirurgicamente para o ciano do player */
+}
+
+/* Estado quando o usuário está clicando e arrastando a barra (Active) */
+::-webkit-scrollbar-thumb:active {
+    background-color: #0891b2; /* Tom de ciano ligeiramente mais escuro para feedback de pressão */
+}
+
+/* 2. Suporte Nativo para o Firefox (Padrão Moderno W3C) */
+* {
+    scrollbar-width: thin;                        /* Deixa a barra fina e elegante */
+    scrollbar-color: #334155 var(--bg-main, #0f172a); /* Define (Cor do indicador | Cor do trilho) */
+}
+
+
