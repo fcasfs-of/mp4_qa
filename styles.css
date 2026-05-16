@@ -198,7 +198,7 @@ img, video {
 }
 
 /* ==========================================================================
-   5. GRID DOS RESULTADOS DA ANÁLISE RECONFIGURADO
+   5. GRID DOS RESULTADOS DA ANÁLISE
    ========================================================================== */
 .results-grid {
     display: grid;
@@ -333,7 +333,7 @@ img, video {
 }
 
 /* ==========================================================================
-   6. LIGHTBOX COMPONENTE (MÓDULO TRANSICIONADO)
+   6. LIGHTBOX COMPONENTE
    ========================================================================== */
 .lightbox-overlay {
     position: fixed;
@@ -405,13 +405,13 @@ img, video {
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: #1e293b !important; /* Força o tema escuro independentemente do tema HTML */
+    background-color: #1e293b !important; 
     border-top: 1px solid #334155 !important;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4) !important;
     z-index: 9999;
     padding: 1rem 2rem;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: visible !important; /* CRÍTICO: Permite que o preview saia para fora da barra do player */
+    overflow: visible !important; /* CRÍTICO: Permite que os previews flutuem para fora */
 }
 
 @keyframes slideUp {
@@ -481,7 +481,6 @@ img, video {
     flex-shrink: 0;
 }
 
-/* HOVER REATIVO DO PLAYER: Transita suavemente para Ciano */
 .player-btn:hover {
     color: #06b6d4 !important;
     background-color: rgba(6, 182, 212, 0.1) !important;
@@ -589,7 +588,7 @@ img, video {
 }
 
 /* ==========================================================================
-   9. REGRAS CORRIGIDAS PARA TELA CHEIA COMPLETA (BOTÕES VISÍVEIS)
+   9. REGRAS PARA TELA CHEIA COMPLETA (BOTÕES VISÍVEIS)
    ========================================================================== */
 #custom-player-container:fullscreen,
 #custom-player-container:-webkit-full-screen {
@@ -637,7 +636,6 @@ img, video {
     object-fit: contain !important;
 }
 
-/* CAIXA DE FERRAMENTAS PROTEGIDA EM TELA CHEIA COM SUPREMA CAMADA DE VISIBILIDADE */
 #custom-player-container:fullscreen .player-controls,
 #custom-player-container:-webkit-full-screen .player-controls {
     width: 100% !important;
@@ -649,7 +647,7 @@ img, video {
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
-    z-index: 2147483647 !important; /* Garante que os botões fiquem acima da tela cheia nativa do monitor */
+    z-index: 2147483647 !important; 
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -707,23 +705,30 @@ img, video {
 }
 
 /* ==========================================================================
-   12. PREVIEW GRÁFICO DE CENA E TOOLTIP DE VOLUME ISOLADO NO SLIDER
+   12. PREVIEW GRÁFICO DE CENA E TOOLTIP DE VOLUME FLUTUANTE REAL (CORRIGIDO)
    ========================================================================== */
 
-/* MINI-JANELA FLUTUANTE DE PREVIEW DE CENA (ACOMPANHA O CURSOR POR CIMA DO OBJETO) */
+/* Remove travas impostas para que as caixas suspensas flutuem livres por cima */
+.player-fixed-bottom,
+.player-wrapper,
+.player-controls {
+    overflow: visible !important;
+}
+
+/* MINI-JANELA FLUTUANTE DE PREVIEW DE CENA (FLUTUA POR CIMA DA LINHA DO TEMPO) */
 .custom-progress-bar-container .timeline-preview-box {
     position: absolute;
-    bottom: calc(100% + 14px); /* Eleva o balão acima da trilha */
+    bottom: calc(100% + 14px); 
     left: var(--preview-x, 0px);
     transform: translateX(-50%);
     background-color: #0f172a;
-    border: 2px solid #06b6d4; /* Contorno neon identitário */
+    border: 2px solid #06b6d4; /* Contorno neon */
     border-radius: 0.5rem;
     padding: 4px;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
     display: none; 
     pointer-events: none;
-    z-index: 2147483647 !important; /* Camada suprema absoluta */
+    z-index: 2147483647 !important; 
 }
 
 #timeline-preview-canvas {
@@ -742,34 +747,39 @@ img, video {
     font-variant-numeric: tabular-nums;
 }
 
-/* TOOLTIP DINÂMICO ISOLADO EM CSS EM RESPOSTA AO HOVER EXCLUSIVO DO SLIDER */
-.volume-slider-bar.dynamic-volume-slider-tooltip {
+/* CONTAINER DO SLIDER DE VOLUME (MESTRE DO TOOLTIP FLUTUANTE REAL) */
+.slider-tooltip-container.dynamic-volume-tooltip {
     position: relative;
+    display: flex;
+    align-items: center;
+    overflow: visible !important;
 }
 
-.volume-slider-bar.dynamic-volume-slider-tooltip::before {
+/* Constrói a caixinha flutuante que acompanha o cursor do mouse */
+.slider-tooltip-container.dynamic-volume-tooltip::after {
     content: attr(data-player-tooltip-content);
     position: absolute;
-    bottom: calc(100% + 16px);
+    bottom: calc(100% + 14px); /* Distância perfeita acima do slider */
     left: var(--tooltip-x, 50%);
     transform: translateX(-50%) translateY(4px);
     background-color: #0f172a;
     color: #f8fafc;
     padding: 0.3rem 0.55rem;
     border-radius: 0.25rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     transition: opacity 0.1s ease-out, transform 0.1s ease-out;
     z-index: 2147483647 !important;
 }
 
-.volume-slider-bar.dynamic-volume-slider-tooltip:hover::before {
+/* Ativa o surgimento apenas se houver conteúdo de porcentagem injetado pelo JS */
+.slider-tooltip-container.dynamic-volume-tooltip[data-player-tooltip-content]::after {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
@@ -794,6 +804,7 @@ img, video {
         gap: 0.75rem;
     }
 }
+
 
 
 
