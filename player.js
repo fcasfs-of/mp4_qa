@@ -200,17 +200,27 @@
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
-            // GATILHO FORÇADO DE EXPANSÃO INTERNA (MÓDULO CINEMA NO CANTO ESQUERDO)
+            // CORREÇÃO: GATILHO DE DESTAQUE DE CINEMA EM TELA CHEIA (SEM TRAVA FIXA) [1]
             btnVpExpand.addEventListener('click', function(e) {
                 viewport.classList.add('mode-viewport-expanded');
                 btnVpExpand.style.setProperty('display', 'none', 'important');
                 btnVpCompress.style.setProperty('display', 'flex', 'important');
+                
+                // Centraliza a visão do usuário de forma suave diretamente no vídeo ampliado [1]
+                setTimeout(function() {
+                    viewport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
             });
 
             btnVpCompress.addEventListener('click', function(e) {
                 viewport.classList.remove('mode-viewport-expanded');
                 btnVpCompress.style.setProperty('display', 'none', 'important');
                 btnVpExpand.style.setProperty('display', 'flex', 'important');
+                
+                // Devolve a página à posição original estável [1]
+                setTimeout(function() {
+                    viewport.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 50);
             });
 
             btnPlay.addEventListener('click', function() {
@@ -248,7 +258,7 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
-            // PREVIEW GRÁFICO DE CENA DA TIMELINE COORDENADO PELO MOUSE
+            // PREVIEW GRÁFICO DE CENA DA TIMELINE COORDENADO PELO MOUSE [3]
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
                 
@@ -260,6 +270,7 @@
                 previewVideoElement.currentTime = timeAtCursor;
                 
                 const ctx = previewCanvas.getContext('2d');
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
                 ctx.drawImage(previewVideoElement, 0, 0, previewCanvas.width, previewCanvas.height);
                 
                 previewTimeSpan.textContent = window.VideoPlayerManager.formatTime(timeAtCursor);
@@ -273,7 +284,7 @@
                 previewWindow.style.display = 'none'; 
             });
 
-            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO CONTÊINER FILHO DO INPUT
+            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER [3]
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
