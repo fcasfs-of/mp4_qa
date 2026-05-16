@@ -780,47 +780,49 @@ img, video {
 
 
 /* ==========================================================================
-   12. MECANISMO DE TOOLTIPS FLUTUANTES COMPACTOS (PROGRESSO E VOLUME)
+   12. MECANISMO DE TOOLTIPS DINÂMICOS POR COORDENADAS (CSS + JS)
    ========================================================================== */
-.has-player-tooltip {
+.dynamic-player-tooltip {
     position: relative;
 }
 
-/* Cria e posiciona a caixa suspensa usando o atributo data-tooltip */
-.has-player-tooltip::after {
-    content: attr(data-tooltip);
+/* Constrói a caixinha flutuante capturando o atributo string injetado via JS */
+.dynamic-player-tooltip::after {
+    content: attr(data-player-tooltip-content);
     position: absolute;
     bottom: calc(100% + 10px);
-    left: 50%;
+    /* Lê a variável inline --tooltip-x calculada em tempo real no JS */
+    left: var(--tooltip-x, 50%);
     transform: translateX(-50%) translateY(4px);
     background-color: #0f172a;
     color: #f8fafc;
     padding: 0.35rem 0.65rem;
     border-radius: 0.35rem;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums; /* Evita que os números fiquem tremendo no mousemove */
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: opacity 0.15s cubic-bezier(0.2, 0, 0.2, 1), transform 0.15s cubic-bezier(0.2, 0, 0.2, 1);
+    transition: opacity 0.1s ease-out, transform 0.1s ease-out;
     z-index: 2147483647 !important;
 }
 
-/* Exibe o indicador suspenso ao passar o mouse */
-.has-player-tooltip:hover::after {
+/* Faz a caixinha surgir dinamicamente apenas quando o mouse estiver em cima */
+.dynamic-player-tooltip:hover::after {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
 
-/* Ajuste específico de respiro para a linha do tempo horizontal mestre */
-.custom-progress-bar-container.has-player-tooltip::after {
+/* Respiro de espaçamento vertical ideal para a linha do tempo principal */
+.custom-progress-bar-container.dynamic-player-tooltip::after {
     bottom: calc(100% + 12px);
 }
 
-/* Ajuste específico para que o tooltip do slider de volume acompanhe o topo do container pai */
-.volume-slider-bar.has-player-tooltip::after {
+/* Respiro vertical do tooltip de porcentagem flutuante do volume */
+.volume-control-wrapper.dynamic-player-tooltip::after {
     bottom: calc(100% + 14px);
 }
 
