@@ -42,7 +42,7 @@
 }
 
 /* ==========================================================================
-   2. VIEWPORT VISUAL E BOTÕES FLUTUANTES NO CANTO INFERIOR ESQUERDO (MOBILE SAFE)
+   2. VIEWPORT VISUAL E BOTÕES FLUTUANTES NO CANTO INFERIOR ESQUERDO (FOCUS MODE)
    ========================================================================== */
 .player-video-viewport {
     position: relative; /* Base de ancoragem fixa para os botões flutuantes */
@@ -54,18 +54,18 @@
     border: 1px solid #334155;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-                height 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.2s ease;
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+                height 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+                margin 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .player-video-viewport video {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Mantém a proporção nativa apenas no modo miniatura padrão */
+    object-fit: contain; /* Mantém a proporção original perfeita no modo miniatura */
 }
 
-/* BOTÕES FLUTUANTES INTEGRADOS À TELA DO VÍDEO */
+/* BOTÕES FLUTUANTES INTEGRADOS À TELA */
 .viewport-floating-action-btn {
     position: absolute;
     bottom: 8px;
@@ -99,32 +99,36 @@
 }
 
 /* ==========================================================================
-   ESTADO REATIVO CINEMA EXPANDIDO: FORÇADO EM 100% DA LARGURA (WIDTH) REAL
+   ESTADO REATIVO: DESTAQUE DE CINEMA EM TELA CHEIA (WIDTH 100% CORRIDO)
    ========================================================================== */
 .player-video-viewport.mode-viewport-expanded {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important; /* Trava o contêiner em 100% da largura da janela */
-    height: calc(100vh - 115px) !important; /* Desconta o espaço da barra inferior de controles */
-    background-color: #090d16 !important; /* Fundo escuro premium */
-    z-index: 9998 !important; /* Camada posicionada abaixo do painel de controles */
+    position: relative !important; /* Libera o elemento para acompanhar o scroll natural */
+    width: 100vw !important; /* Força o destaque a ocupar 100% da largura horizontal */
+    height: 75vh !important; /* Define uma altura cinemática imersiva ideal para o foco */
+    max-height: 600px !important;
+    background-color: #090d16 !important; /* Fundo escuro de teatro premium */
+    z-index: 998 !important;
     border-radius: 0px !important;
     border: none !important;
-    box-shadow: none !important;
-    display: block !important; /* Remove restrições de Flexbox para esticamento total */
-    padding: 0 !important;
-    margin: 0 !important;
+    border-bottom: 2px solid #06b6d4 !important; /* Linha de destaque inferior em ciano */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+    
+    /* Quebra os limites do grid central do site para esticar de ponta a ponta na janela */
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    left: 50% !important;
+    right: 50% !important;
+    transform: translateX(-50%) !important;
 }
 
-/* O VÍDEO INTERNO PREENCHE OBRIGATORIAMENTE 100% DA LARGURA DISPONÍVEL */
+/* O vídeo interno preenche a largura mestre mantendo a melhor proporção de escala */
 .player-video-viewport.mode-viewport-expanded video {
-    width: 100vw !important; /* Força o vídeo a esticar em 100% do width */
+    width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important; /* Elimina as barras pretas laterais preenchendo o espaço */
+    object-fit: contain !important; /* Mantém o vídeo íntegro sem distorcer ou cortar legendas */
 }
 
-/* Ajusta a posição do botão flutuante quando o modo cinema expandido estiver ativo */
+/* Ajusta a posição do botão quando o modo destaque de cinema estiver ativo */
 .player-video-viewport.mode-viewport-expanded .viewport-floating-action-btn {
     bottom: 16px !important;
     left: 16px !important;
@@ -369,7 +373,7 @@
 
 /* ==========================================================================
    6. BLINDAGEM DE TELA CHEIA MONITORES (FULLSCREEN MANAGER)
-   ========================================================================= */
+   ========================================================================== */
 #custom-player-container:fullscreen,
 #custom-player-container:-webkit-full-screen {
     width: 100vw !important;
@@ -435,7 +439,7 @@
 #custom-player-container:fullscreen .time-display-container,
 #custom-player-container:-webkit-full-screen .time-display-container { color: #e2e8f0 !important; }
 
-/* MEDIA QUERY INDUSTRIAL: SUPORTE COMPLETO MOBILE EM DISPOSITIVOS DE TOQUE */
+/* MEDIA QUERY INDUSTRIAL: RESPONSIVIDADE ERGONÔMICA NO MOBILE */
 @media (max-width: 768px) {
     .player-wrapper { flex-direction: column; gap: 0.75rem; }
     .player-video-viewport { width: 100%; max-width: 240px; }
@@ -450,14 +454,10 @@
         background-color: rgba(15, 23, 42, 0.9) !important;
     }
     
-    /* Calibração fina da altura no mobile para cobrir de forma elegante sem quebras horizontais */
+    /* No mobile, o destaque se ajusta na proporção vertical do celular */
     .player-video-viewport.mode-viewport-expanded {
-        height: calc(100vh - 160px) !important;
-    }
-    
-    .player-video-viewport.mode-viewport-expanded video {
-        width: 100vw !important;
-        object-fit: fill !important; /* Em smartphones verticais, preenche de ponta a ponta sem cortes laterais */
+        height: 45vh !important;
+        min-height: 280px !important;
     }
 }
 
