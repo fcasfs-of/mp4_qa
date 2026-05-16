@@ -1,7 +1,7 @@
 (function() {
     let playerContainer = null;
     let videoElement = null;
-    let previewVideoElement = null; 
+    let previewVideoElement = null; // Vídeo fantasma em memória para renderizar previews na linha do tempo
     let isLooping = false;
     let savedVideoUrl = ""; 
     let savedFileName = ""; 
@@ -99,7 +99,7 @@
                                         '<option value="3">3.00x</option>',
                                     '</select>',
                                 '</div>',
-                                '<!-- ADICIONADO: Botão de Captura de Tela (Snapshot) -->',
+                                '<!-- Botão de Captura de Tela (Snapshot) -->',
                                 '<button id="btn-player-snapshot" aria-label="Capturar Cena" class="player-btn" title="Capturar Frame Atual">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>',
                                 '</button>',
@@ -118,10 +118,12 @@
             document.body.appendChild(playerContainer);
             videoElement = document.getElementById('custom-video-element');
 
+            // CORREÇÃO MESTRE: Cria o player fantasma e força o hardware a carregar o buffer na memória
             previewVideoElement = document.createElement('video');
             previewVideoElement.src = sourceUrl;
             previewVideoElement.muted = true;
             previewVideoElement.preload = 'auto';
+            previewVideoElement.load(); // Força o ignitor de carregamento do contêiner de mídia
 
             window.VideoPlayerManager.bindEvents();
             
@@ -218,29 +220,36 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
-            // GATILHO DA CAPTURA DE CENA: Renderiza os pixels em canvas e envia para o Lightbox
             btnSnapshot.addEventListener('click', function() {
                 if (!videoElement || !window.LightboxManager) return;
                 try {
                     const canvas = document.createElement('canvas');
-                    // Extrai a proporção de hardware nativa real do arquivo de vídeo
                     canvas.width = videoElement.videoWidth || 640;
                     canvas.height = videoElement.videoHeight || 360;
-                    
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    
-                    // Transforma em DataURL (Base64 codificado como PNG)
                     const frameDataUrl = canvas.toDataURL('image/png');
-                    
-                    // Abre no Lightbox identificando explicitamente como 'image' para liberar Zoom e Download
                     window.LightboxManager.open(frameDataUrl, 'image');
                 } catch(e) {
                     console.error("Falha ao capturar o frame técnico do vídeo:", e);
                 }
             });
 
-            // PREVIEW GRÁFICO DE CENA DA TIMELINE
+            // CORREÇÃO: ESCUTA ASSÍNCRONA REATIVA COM RENDERIZAÇÃO VIA EVENTO 'SEEKED'
+            let isRenderingPreview = false;
+            
+            const renderCanvasPreview = function() {
+                if (!previewVideoElement || !previewCanvas) return;
+                const ctx = previewCanvas.getContext('2d');
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height); // Desenha fundo preto preventivo anti-gargalo
+                ctx.drawImage(previewVideoElement, 0, 0, previewCanvas.width, previewCanvas.height);
+                isRenderingPreview = false;
+            };
+
+            // Vincula o callback de sucesso de busca do quadro ao player fantasma
+            previewVideoElement.addEventListener('seeked', renderCanvasPreview);
+
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
                 
@@ -249,11 +258,12 @@
                 pct = Math.min(Math.max(pct, 0), 1);
                 
                 const timeAtCursor = pct * videoElement.duration;
-                previewVideoElement.currentTime = timeAtCursor;
                 
-                const ctx = previewCanvas.getContext('2d');
-                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                ctx.drawImage(previewVideoElement, 0, 0, previewCanvas.width, previewCanvas.height);
+                // Executa a busca de frames de forma protegida para não engasgar o pipeline
+                if (!isRenderingPreview) {
+                    isRenderingPreview = true;
+                    previewVideoElement.currentTime = timeAtCursor;
+                }
                 
                 previewTimeSpan.textContent = window.VideoPlayerManager.formatTime(timeAtCursor);
                 
@@ -266,7 +276,7 @@
                 previewWindow.style.display = 'none'; 
             });
 
-            // TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
+            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
@@ -357,6 +367,12 @@
 
             btnClose.addEventListener('click', function() {
                 if (videoElement) { savedTimeBeforeClose = videoElement.currentTime; }
+                
+                // Limpa a escuta assíncrona ao fechar para evitar vazamentos na pilha do DOM
+                if (previewVideoElement) {
+                    previewVideoElement.removeEventListener('seeked', renderCanvasPreview);
+                }
+                
                 window.VideoPlayerManager.destroy();
                 window.VideoPlayerManager.createRecoveryButton();
             });
