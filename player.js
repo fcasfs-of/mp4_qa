@@ -3,18 +3,28 @@
     let videoElement = null;
     let isLooping = false;
     let savedVideoUrl = ""; 
+    let savedFileName = ""; // Armazena o identificador/nome do arquivo ativo
     let savedTimeBeforeClose = 0; 
 
     window.VideoPlayerManager = {
         /**
          * Inicializa o Player de Vídeo Avançado fixado no rodapé
          * @param {string} sourceUrl - URL remota ou ObjectURL do vídeo MP4
+         * @param {string} fileName - Nome identificador do arquivo para controle de reset
          */
-        create: function(sourceUrl) {
+        create: function(sourceUrl, fileName) {
             this.destroyRecoveryButton(); 
             this.destroy();
 
+            const currentFileIdentifier = fileName || "video_stream";
+
+            // REGRA DE RESET: Se o nome do arquivo for diferente do anterior, zera o tempo salvo
+            if (savedFileName !== currentFileIdentifier) {
+                savedTimeBeforeClose = 0;
+            }
+
             savedVideoUrl = sourceUrl;
+            savedFileName = currentFileIdentifier;
 
             playerContainer = document.createElement('div');
             playerContainer.id = 'custom-player-container';
@@ -25,7 +35,6 @@
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<!-- ATUALIZAÇÃO: Removido o mudo fixo para ler o estado salvo de forma dinâmica -->',
                         '<video id="custom-video-element" playsinline autoplay src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
@@ -37,9 +46,23 @@
                         '</div>',
                         '<div class="controls-row">',
                             '<div class="controls-left">',
+                                '<!-- Botão Play/Pause -->',
                                 '<button id="btn-player-play" aria-label="Play/Pause" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
                                 '</button>',
+                                '<!-- NOVO: Botão Parar (Stop) -->',
+                                '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar">',
+                                    '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>',
+                                '</button>',
+                                '<!-- NOVO: Botão Retroceder 10s -->',
+                                '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
+                                    '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
+                                '</button>',
+                                '<!-- NOVO: Botão Avançar 10s -->',
+                                '<button id="btn-player-forward" aria-label="Avançar 10s" class="player-btn" title="Avançar 10s">',
+                                    '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>',
+                                '</button>',
+                                '<!-- Botão Loop -->',
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
                                 '</button>',
@@ -89,20 +112,17 @@
 
             document.body.appendChild(playerContainer);
             videoElement = document.getElementById('custom-video-element');
+            videoElement.muted = false;
 
-            // Conecta os eventos do ciclo de vida assim que houver sinal verde de buffer
             videoElement.addEventListener('canplay', function onCanPlayReady() {
                 window.VideoPlayerManager.bindEvents();
-                // ATUALIZAÇÃO: Carrega as preferências salvas ANTES de disparar qualquer tentativa de play
                 window.VideoPlayerManager.loadSavedPlayerSettings();
                 
                 if (savedTimeBeforeClose > 0) {
                     videoElement.currentTime = savedTimeBeforeClose;
                 }
                 
-                // Trata as restrições assíncronas do navegador de forma robusta
                 videoElement.play().catch(function() {
-                    console.log("Autoplay bloqueado pelo navegador, aguardando interação do usuário.");
                     const btnPlay = playerContainer.querySelector('#btn-player-play');
                     if (btnPlay) btnPlay.innerHTML = svgPlay;
                 });
@@ -117,6 +137,9 @@
             if (!videoElement || !playerContainer) return;
 
             const btnPlay = playerContainer.querySelector('#btn-player-play');
+            const btnStop = playerContainer.querySelector('#btn-player-stop');
+            const btnRewind = playerContainer.querySelector('#btn-player-rewind');
+            const btnForward = playerContainer.querySelector('#btn-player-forward');
             const btnLoop = playerContainer.querySelector('#btn-player-loop');
             const btnMute = playerContainer.querySelector('#btn-player-mute');
             const btnExpandLightbox = playerContainer.querySelector('#btn-player-lightbox-expand');
@@ -150,17 +173,34 @@
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
+            // Play / Pause
             btnPlay.addEventListener('click', function() {
                 if (videoElement.paused || videoElement.ended) {
-                    videoElement.play()
-                        .then(function() { btnPlay.innerHTML = svgPause; })
-                        .catch(function() { btnPlay.innerHTML = svgPlay; });
+                    videoElement.play().then(function() { btnPlay.innerHTML = svgPause; });
                 } else {
                     videoElement.pause();
                     btnPlay.innerHTML = svgPlay;
                 }
             });
 
+            // NOVO: Ação Botão Parar (Stop)
+            btnStop.addEventListener('click', function() {
+                videoElement.pause();
+                videoElement.currentTime = 0;
+                btnPlay.innerHTML = svgPlay;
+            });
+
+            // NOVO: Ação Botão Retroceder 10 Segundos
+            btnRewind.addEventListener('click', function() {
+                videoElement.currentTime = Math.max(0, videoElement.currentTime - 10);
+            });
+
+            // NOVO: Ação Botão Avançar 10 Segundos
+            btnForward.addEventListener('click', function() {
+                videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10);
+            });
+
+            // Loop de Repetição
             btnLoop.addEventListener('click', function() {
                 isLooping = !isLooping;
                 videoElement.loop = isLooping;
@@ -179,7 +219,7 @@
                     const frameDataUrl = canvas.toDataURL('image/png');
                     window.LightboxManager.open(frameDataUrl, 'player_snapshot');
                 } catch(e) {
-                    console.error("CORS Capture Error:", e);
+                    console.error(e);
                 }
             });
 
@@ -296,27 +336,29 @@
                 playerContainer.querySelector('#volume-slider').value = savedVol;
                 videoElement.volume = parseFloat(savedVol);
             }
-            
-            // ATUALIZAÇÃO CRÍTICA: Aplica o estado booleano de mudo salvo pelo usuário de forma reativa
-            if (savedMuted === 'true') {
-                videoElement.muted = true;
-            } else if (savedMuted === 'false') {
-                videoElement.muted = false;
-            }
+            if (savedMuted === 'true') { videoElement.muted = true; }
+            else if (savedMuted === 'false') { videoElement.muted = false; }
             
             this.updateVolumeIcon();
         },
 
+        /**
+         * REQUISITO NOVO BILÍNGUE: Monta o botão flutuante traduzido de acordo com a lang da página
+         */
         createRecoveryButton: function() {
             if (document.getElementById('btn-player-recovery') || !savedVideoUrl) return;
+
+            // Detecta a linguagem ativa através do atributo no HTML ou salva no localStorage
+            const activeLang = document.documentElement.getAttribute('lang') || localStorage.getItem('meta-lang') || 'pt';
+            const buttonText = (activeLang.indexOf('en') !== -1) ? 'Open Player' : 'Abrir Player';
 
             const recBtn = document.createElement('button');
             recBtn.id = 'btn-player-recovery';
             recBtn.className = 'player-recovery-floating-btn';
-            recBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" style="margin-right:6px;"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>  Player';
+            recBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" style="margin-right:6px;"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> ' + buttonText;
             
             recBtn.addEventListener('click', function() {
-                window.VideoPlayerManager.create(savedVideoUrl);
+                window.VideoPlayerManager.create(savedVideoUrl, savedFileName);
             });
 
             document.body.appendChild(recBtn);
