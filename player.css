@@ -12,7 +12,7 @@
     z-index: 9999;
     padding: 1rem 2rem;
     animation: playerSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: visible !important; /* CRÍTICO: Permite que as miniaturas flutuem para fora */
+    overflow: visible !important; /* CRÍTICO: Permite que os previews flutuem para fora */
 }
 
 @keyframes playerSlideUp {
@@ -42,10 +42,10 @@
 }
 
 /* ==========================================================================
-   2. VIEWPORT VISUAL E BOTÕES FLUTUANTES DE EXPANSÃO INTERNA
+   2. VIEWPORT VISUAL E BOTÕES FLUTUANTES NO CANTO INFERIOR ESQUERDO
    ========================================================================== */
 .player-video-viewport {
-    position: relative; /* Base de ancoragem para os botões flutuantes */
+    position: relative; /* Base de ancoragem fixa para os botões flutuantes */
     width: 160px;
     aspect-ratio: 16 / 9;
     background-color: #000000;
@@ -54,7 +54,7 @@
     border: 1px solid #334155;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .player-video-viewport video {
@@ -63,11 +63,11 @@
     object-fit: contain;
 }
 
-/* BOTÕES FLUTUANTES DIRETOS NA TELA DO VÍDEO */
+/* Fixado estritamente no canto inferior esquerdo com visibilidade garantida */
 .viewport-floating-action-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    bottom: 8px;
+    left: 8px;
     background-color: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #f8fafc !important;
@@ -77,14 +77,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    opacity: 0; /* Fica oculto por padrão */
+    z-index: 100;
+    opacity: 0; /* Oculto por padrão, surge no hover */
     transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Torna o botão visível ao passar o mouse sobre a tela do vídeo */
+/* Força a exibição imediata do botão ao passar o mouse sobre a tela */
 .player-video-viewport:hover .viewport-floating-action-btn {
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 .viewport-floating-action-btn:hover {
@@ -93,15 +93,14 @@
     border-color: #06b6d4;
 }
 
-/* ESTADO REATIVO FORÇADO: Janela expandida cobrindo o site de forma fixa */
+/* ESTADO REATIVO EXPANDIDO: Força renderização cobrindo a página inteira */
 .player-video-viewport.mode-viewport-expanded {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
-    height: calc(100vh - 110px) !important; /* Desconta o espaço exato da barra inferior */
-    aspect-ratio: auto !important;
-    z-index: 9998 !important; /* Fica logo abaixo da barra mestre de controle */
+    height: calc(100vh - 110px) !important; /* Desconta rigorosamente a barra inferior */
+    z-index: 9998 !important; /* Mantém a viewport logo abaixo dos botões de controle */
     border-radius: 0px !important;
     border: none !important;
     box-shadow: none !important;
@@ -380,7 +379,7 @@
     background-color: #000000 !important;
     border: none !important;
     border-radius: 0.5rem !important;
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 #custom-player-container:fullscreen video,
@@ -416,6 +415,7 @@
     .player-video-viewport { width: 100%; max-width: 240px; }
     .controls-row { flex-direction: column; gap: 0.75rem; }
 }
+
 
 
 
