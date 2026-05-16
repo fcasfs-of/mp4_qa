@@ -99,6 +99,10 @@
                                         '<option value="3">3.00x</option>',
                                     '</select>',
                                 '</div>',
+                                '<!-- ADICIONADO: Botão de Captura de Tela (Snapshot) -->',
+                                '<button id="btn-player-snapshot" aria-label="Capturar Cena" class="player-btn" title="Capturar Frame Atual">',
+                                    '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>',
+                                '</button>',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia (Fullscreen)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
                                 '</button>',
@@ -143,6 +147,7 @@
             const btnForward = playerContainer.querySelector('#btn-player-forward');
             const btnLoop = playerContainer.querySelector('#btn-player-loop');
             const btnMute = playerContainer.querySelector('#btn-player-mute');
+            const btnSnapshot = playerContainer.querySelector('#btn-player-snapshot');
             const btnFullscreen = playerContainer.querySelector('#btn-player-fullscreen');
             const btnClose = playerContainer.querySelector('#btn-player-close');
             const volumeSlider = playerContainer.querySelector('#volume-slider');
@@ -211,6 +216,28 @@
             timeDisplayClickRoot.addEventListener('click', function() {
                 showRemainingTime = !showRemainingTime;
                 window.VideoPlayerManager.updateTimeDisplay();
+            });
+
+            // GATILHO DA CAPTURA DE CENA: Renderiza os pixels em canvas e envia para o Lightbox
+            btnSnapshot.addEventListener('click', function() {
+                if (!videoElement || !window.LightboxManager) return;
+                try {
+                    const canvas = document.createElement('canvas');
+                    // Extrai a proporção de hardware nativa real do arquivo de vídeo
+                    canvas.width = videoElement.videoWidth || 640;
+                    canvas.height = videoElement.videoHeight || 360;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    
+                    // Transforma em DataURL (Base64 codificado como PNG)
+                    const frameDataUrl = canvas.toDataURL('image/png');
+                    
+                    // Abre no Lightbox identificando explicitamente como 'image' para liberar Zoom e Download
+                    window.LightboxManager.open(frameDataUrl, 'image');
+                } catch(e) {
+                    console.error("Falha ao capturar o frame técnico do vídeo:", e);
+                }
             });
 
             // PREVIEW GRÁFICO DE CENA DA TIMELINE
