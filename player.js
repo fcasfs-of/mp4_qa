@@ -37,25 +37,20 @@
 
             playerContainer.innerHTML = [
                 '<div class="player-wrapper">',
-                    '<!-- Viewport Visual de Renderização com Botões Flutuantes Superiores -->',
+                    '<!-- Viewport Visual de Renderização com Botões de Expansão Interna -->',
                     '<div id="player-viewport" class="player-video-viewport">',
+                        '<button id="btn-viewport-expand" class="viewport-floating-action-btn" title="Expandir Tela do Vídeo">',
+                            '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
+                        '</button>',
+                        '<button id="btn-viewport-compress" class="viewport-floating-action-btn" title="Retornar ao Normal" style="display:none;">',
+                            '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
+                        '</button>',
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
-                        
-                        '<!-- NOVO: Botão para Fixar/Expandir no Topo Direito -->',
-                        '<button id="btn-player-pin-top" class="viewport-overlay-btn" title="Fixar no Topo / Pin to Top">',
-                            '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z"/></svg>',
-                        '</button>',
-                        
-                        '<!-- NOVO: Botão para Voltar ao Normal (Rodapé) -->',
-                        '<button id="btn-player-unpin" class="viewport-overlay-btn d-none" title="Voltar ao Normal / Restore Down">',
-                            '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V7h14v12z"/></svg>',
-                        '</button>',
                     '</div>',
-                    
                     '<div class="player-controls" id="player-custom-controls-ui">',
                         '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico de Cena -->',
                         '<div class="custom-progress-bar-container" id="progress-bar-root">',
-                            '<!-- Contêiner Flutuante do Preview de Cena -->',
+                            '<!-- Contêiner Flutuante Superior do Preview de Cena -->',
                             '<div class="timeline-preview-box" id="timeline-preview-window">',
                                 '<canvas id="timeline-preview-canvas" width="120" height="68"></canvas>',
                                 '<span id="timeline-preview-time">00:00:00</span>',
@@ -87,7 +82,7 @@
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
                                     '</button>',
                                     '<div class="slider-tooltip-container dynamic-volume-tooltip" id="volume-slider-wrapper">',
-                                        '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
+                                        '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar dynamic-volume-slider-tooltip">',
                                     '</div>',
                                 '</div>',
                                 '<div class="time-display-container" id="time-display-click-root" style="cursor:pointer; user-select:none;">',
@@ -172,10 +167,9 @@
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
             
-            // NOVO: Seletores para os gatilhos superiores de fixação
-            const btnPinTop = playerContainer.querySelector('#btn-player-pin-top');
-            const btnUnpin = playerContainer.querySelector('#btn-player-unpin');
-
+            const viewport = playerContainer.querySelector('#player-viewport');
+            const btnVpExpand = playerContainer.querySelector('#btn-viewport-expand');
+            const btnVpCompress = playerContainer.querySelector('#btn-viewport-compress');
             const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
             const previewWindow = playerContainer.querySelector('#timeline-preview-window');
@@ -193,39 +187,32 @@
                 event.preventDefault();
             });
 
-            // NOVO: Evento para Mudar para o Modo Fixado no Topo
-            btnPinTop.addEventListener('click', function(e) {
-                e.stopPropagation();
-                playerContainer.classList.add('player-pinned-top-right');
-                btnPinTop.classList.add('d-none');
-                btnUnpin.classList.remove('d-none');
-            });
-
-            // NOVO: Evento para Voltar ao Modo Normal (Rodapé)
-            btnUnpin.addEventListener('click', function(e) {
-                e.stopPropagation();
-                playerContainer.classList.remove('player-pinned-top-right');
-                btnUnpin.classList.add('d-none');
-                btnPinTop.classList.remove('d-none');
-            });
-
             const handleFullscreenChange = function() {
                 const fsEl = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
                 if (fsEl === playerContainer) {
                     playerContainer.classList.add('fullscreen-mode-active');
-                    // Remove fixação temporariamente ao entrar em tela cheia cheia para não quebrar
-                    playerContainer.classList.remove('player-pinned-top-right');
                 } else {
                     playerContainer.classList.remove('fullscreen-mode-active');
-                    // Se os botões indicavam que estava fixado, restaura o estado ao sair do fullscreen
-                    if (btnPinTop.classList.contains('d-none')) {
-                        playerContainer.classList.add('player-pinned-top-right');
-                    }
                 }
             };
 
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+            // CONTROLES DE EXPANSÃO FOCADA DA VIEWPORT DO VÍDEO
+            btnVpExpand.addEventListener('click', function(e) {
+                e.stopPropagation();
+                viewport.classList.add('mode-viewport-expanded');
+                btnVpExpand.style.display = 'none';
+                btnVpCompress.style.display = 'flex';
+            });
+
+            btnVpCompress.addEventListener('click', function(e) {
+                e.stopPropagation();
+                viewport.classList.remove('mode-viewport-expanded');
+                btnVpCompress.style.display = 'none';
+                btnVpExpand.style.display = 'flex';
+            });
 
             btnPlay.addEventListener('click', function() {
                 if (videoElement.paused || videoElement.ended) {
@@ -262,6 +249,7 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
+            // PREVIEW GRÁFICO DE CENA DA TIMELINE
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
                 
@@ -283,9 +271,10 @@
             });
 
             progressRoot.addEventListener('mouseleave', function() {
-                previewWindow.style.display = 'none'; 
+                previewWindow.style.display = 'none';
             });
 
+            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
@@ -314,6 +303,17 @@
                     window.LightboxManager.open(frameDataUrl, 'player_snapshot');
                 } catch(e) {
                     console.error(e);
+                }
+            });
+
+            btnFullscreen.addEventListener('click', function() {
+                if (!playerContainer) return;
+                const isCurrentlyFS = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+                if (!isCurrentlyFS) {
+                    if (playerContainer.requestFullscreen) { playerContainer.requestFullscreen(); }
+                    else if (playerContainer.webkitRequestFullscreen) { playerContainer.webkitRequestFullscreen(); }
+                } else {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
                 }
             });
 
