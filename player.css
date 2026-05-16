@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. CONTAINER DO PLAYER FIXO E PARAMETROS DE FLUXO MESTRE
+   1. CONTAINER DO PLAYER FIXO E PARÂMETROS DE FLUXO MESTRE
    ========================================================================== */
 .player-fixed-bottom {
     position: fixed;
@@ -65,25 +65,28 @@
 }
 
 /* ==========================================================================
-   3. CONTROLES DE REPRODUÇÃO - ARQUITETURA RESPONSIVA ANTI-ESTOURO
+   3. CONTROLES DE REPRODUÇÃO - ARQUITETURA FLUIDA UNIVERSAL ADAPTATIVA
    ========================================================================== */
 .controls-row {
-    display: flex;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: row !important; /* Mantém sempre o alinhamento em linha horizontal */
+    flex-wrap: wrap !important;     /* Permite adaptação e quebra interna se o visor for micro */
+    justify-content: space-between; /* Distribui os blocos nas extremidades em telas grandes */
     align-items: center;
-    width: 100%;
+    width: 100% !important;
     gap: 1rem;
     overflow: visible !important;
+    box-sizing: border-box;
 }
 
-/* CORREÇÃO MESTRE: Faz os blocos se adaptarem e quebrarem linha se faltar espaço */
+/* Blocos internos adaptativos com proteção de encolhimento */
 .controls-left, 
 .controls-right {
     display: flex;
     align-items: center;
-    flex-wrap: wrap !important; /* Faz os botões descerem de linha em vez de sumirem da tela */
-    gap: 0.5rem 0.75rem !important; /* Espaçamento inteligente (Vertical | Horizontal) */
-    min-width: 0; /* Evita que o contêiner herde larguras rígidas do conteúdo */
+    flex-wrap: wrap !important;
+    gap: 0.5rem 0.75rem !important;
+    min-width: 0;
     overflow: visible !important;
 }
 
@@ -103,7 +106,7 @@
     justify-content: center;
     min-width: 36px;
     min-height: 36px;
-    flex-shrink: 0 !important; /* Impede o navegador de esmagar o tamanho do ícone */
+    flex-shrink: 0 !important; /* Impede o navegador de esmagar o tamanho dos ícones */
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -134,7 +137,7 @@
     font-variant-numeric: tabular-nums;
     color: #f8fafc !important;
     white-space: nowrap;
-    flex-shrink: 0 !important; /* Garante que o relógio nunca suma ou achate os números */
+    flex-shrink: 0 !important; /* Garante que o cronômetro nunca seja esmagado */
 }
 
 .custom-progress-bar-container {
@@ -479,17 +482,18 @@
 }
 
 /* ==========================================================================
-   8. COMPATIBILIDADE ERGONÔMICA PARA TELAS MENORES (MOBILE SAFE)
+   8. COMPATIBILIDADE ERGONÔMICA RESPONSIVA (MOBILE SAFE COM AUTO-CENTRALIZAÇÃO)
    ========================================================================== */
 @media (max-width: 768px) {
     body {
-        padding-bottom: 260px !important; /* Resguarda a base caso os botões quebrem linha */
+        padding-bottom: 240px !important; /* Resguarda a base para o rodapé se expandir verticalmente */
     }
 
     .player-fixed-bottom {
         padding: 0.75rem 1rem !important;
     }
 
+    /* O wrapper mestre passa a ser coluna para centralizar a miniatura acima dos botões */
     .player-wrapper {
         flex-direction: column !important;
         gap: 0.75rem !important;
@@ -500,43 +504,38 @@
         aspect-ratio: 16 / 9 !important;
     }
 
-    /* Modifica o row para empilhar os blocos left e right verticalmente se o celular for muito estreito */
+    /* Calibração responsiva mestre para o controls-row no mobile */
     .controls-row {
-        flex-direction: column !important;
-        align-items: center !important;
+        justify-content: center !important; /* Centraliza as linhas de botões em telas pequenas */
         gap: 0.75rem !important;
     }
 
-    /* Centraliza os botões em suas respectivas linhas de quebra */
+    /* Centraliza os botões internos de forma harmônica em aparelhos touch */
     .controls-left, 
     .controls-right {
         width: 100% !important;
         justify-content: center !important;
     }
 
-    /* Oculta o slider analógico de volume no mobile para otimizar espaço de tela */
+    /* Oculta o slider analógico de volume no mobile para poupar espaço (o clique de mudo continua ativo) */
     .volume-slider-bar {
         display: none !important;
     }
 
-    /* Oculta os tooltips de mouse por ausência de ponteiro físico */
+    /* Desativa tooltips gráficos de mouse por ausência de ponteiro físico no celular */
     .custom-progress-bar-container .timeline-preview-box,
     .slider-tooltip-container.dynamic-volume-tooltip::after {
         display: none !important;
         opacity: 0 !important;
     }
 
-    /* Mantém o dropdown de velocidades centralizado na tela do celular */
+    /* Garante que a lista suspensa de velocidades abra centralizada horizontalmente no celular */
     .player-speed-dropdown-list {
         right: auto !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
 }
-
-
-
-
 
 
 
