@@ -11,7 +11,6 @@ html[data-theme="dark"] {
     --accent-hover: #0891b2;
     --border-color: #334155;
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-    --player-bg: rgba(30, 41, 59, 0.98);
     --badge-video: #16a34a;
     --badge-audio: #0284c7;
 }
@@ -26,7 +25,6 @@ html[data-theme="light"] {
     --accent-hover: #0369a1;
     --border-color: #e2e8f0;
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-    --player-bg: rgba(255, 255, 255, 0.98);
     --badge-video: #15803d;
     --badge-audio: #0369a1;
 }
@@ -39,8 +37,6 @@ html[data-theme="light"] {
     margin: 0;
     padding: 0;
     transition: background-color 0.2s ease, border-color 0.2s ease;
-    transition: all 0.1s linear;
-    user-select:none;
 }
 
 body {
@@ -48,7 +44,7 @@ body {
     background-color: var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
-    padding-bottom: 240px; /* Previne que o player flutuante cubra elementos */
+    padding-bottom: 240px; /* Previne que o player flutuante cubra os elementos */
     min-height: 100vh;
     overflow-x: hidden; /* Trava vazamento horizontal */
 }
@@ -118,7 +114,7 @@ img, video {
 }
 
 /* ==========================================================================
-   4. ESTRUTURA DO CONTAINER DE UPLOAD & LINK
+   4. ESTRUTURA DO CONTAINER DE UPLOAD
    ========================================================================== */
 .app-container {
     max-width: 1200px;
@@ -160,32 +156,6 @@ img, video {
     width: 48px;
     height: 48px;
     fill: var(--text-muted);
-}
-
-.url-input-container {
-    margin-top: 1.5rem;
-    width: 100%;
-}
-
-.input-group {
-    display: flex;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.input-group input {
-    flex: 1;
-    background-color: var(--bg-input);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.95rem;
-    min-width: 0; /* Correção para o flexbox não estourar */
-}
-
-.input-group input:focus {
-    outline: 2px solid var(--accent);
 }
 
 .btn-primary, .btn-secondary {
@@ -250,6 +220,7 @@ img, video {
 .thumbnail-wrapper {
     position: relative;
     width: 100%;
+    text-align: center;
     aspect-ratio: 16 / 9;
     background-color: #000000;
     border-radius: 0.5rem;
@@ -323,7 +294,7 @@ img, video {
     font-size: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    word-break: break-all; /* Previne estouro de strings compridas */
+    word-break: break-all;
 }
 
 .track-badge {
@@ -335,9 +306,6 @@ img, video {
     text-transform: uppercase;
     white-space: nowrap;
 }
-
-.track-badge.badge-video { background-color: var(--badge-video); }
-.track-badge.badge-audio { background-color: var(--badge-audio); }
 
 .metadata-item {
     display: flex;
@@ -361,7 +329,7 @@ img, video {
 .metadata-value {
     font-weight: 500;
     text-align: right;
-    word-break: break-word; /* Força quebra de descrições grandes */
+    word-break: break-word;
 }
 
 /* ==========================================================================
@@ -443,6 +411,7 @@ img, video {
     z-index: 9999;
     padding: 1rem 2rem;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: visible !important; /* CRÍTICO: Permite que o preview saia para fora da barra do player */
 }
 
 @keyframes slideUp {
@@ -457,6 +426,7 @@ img, video {
     align-items: center;
     gap: 1.5rem;
     width: 100%;
+    overflow: visible !important;
 }
 
 .player-video-viewport {
@@ -482,7 +452,8 @@ img, video {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 0; /* Anti-estouro */
+    min-width: 0; 
+    overflow: visible !important;
 }
 
 .controls-row {
@@ -502,7 +473,7 @@ img, video {
 .player-btn {
     background: transparent;
     border: none;
-    color: #f8fafc !important; /* Força cor off-white permanente nos botões */
+    color: #f8fafc !important; 
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 0.375rem;
@@ -510,7 +481,7 @@ img, video {
     flex-shrink: 0;
 }
 
-/* CORREÇÃO DO HOVER TEMA DARK: Transita suavemente para Ciano em vez de Branco */
+/* HOVER REATIVO DO PLAYER: Transita suavemente para Ciano */
 .player-btn:hover {
     color: #06b6d4 !important;
     background-color: rgba(6, 182, 212, 0.1) !important;
@@ -521,7 +492,6 @@ img, video {
     background-color: rgba(6, 182, 212, 0.15) !important;
 }
 
-/* Botão Fechar mantém a cor vermelha reativa de aviso */
 .player-btn.close-btn:hover {
     color: #ef4444 !important;
     background-color: rgba(239, 68, 68, 0.1) !important;
@@ -568,7 +538,7 @@ img, video {
     border-radius: 4px;
     cursor: pointer;
     margin-bottom: 0.85rem;
-    overflow: visible;
+    overflow: visible !important;
 }
 
 .progress-bar-buffered {
@@ -667,11 +637,11 @@ img, video {
     object-fit: contain !important;
 }
 
-/* BLINDA CONTROLES CONTRA SOBREPOSIÇÃO USANDO O VALOR MÁXIMO DE EMPILHAMENTO (Z-INDEX) */
+/* CAIXA DE FERRAMENTAS PROTEGIDA EM TELA CHEIA COM SUPREMA CAMADA DE VISIBILIDADE */
 #custom-player-container:fullscreen .player-controls,
 #custom-player-container:-webkit-full-screen .player-controls {
     width: 100% !important;
-    background-color: #1e293b !important; /* Cor sólida protetiva */
+    background-color: #1e293b !important; 
     padding: 1rem 1.5rem !important;
     border-radius: 0.75rem !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -679,7 +649,7 @@ img, video {
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
-    z-index: 2147483647 !important; /* Força exibição acima do canvas e plano de fundo nativo */
+    z-index: 2147483647 !important; /* Garante que os botões fiquem acima da tela cheia nativa do monitor */
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -694,7 +664,7 @@ img, video {
 }
 
 /* ==========================================================================
-   10. BOTÃO FLUTUANTE DE RECUPERAÇÃO DO PLAYER
+   10. BOTÃO FLUTUANTE DE RECUPERAÇÃO DO PLAYER (BILÍNGUE)
    ========================================================================== */
 .player-recovery-floating-btn {
     position: fixed;
@@ -727,29 +697,8 @@ img, video {
 }
 
 /* ==========================================================================
-   11. RESPONSIVIDADE PARA TELAS MENORES
+   11. HOVER DO BOTÃO DE CONTROLE DO RODAPÉ (STOP, REWIND, FORWARD)
    ========================================================================== */
-@media (max-width: 768px) {
-    body {
-        padding-bottom: 260px;
-    }
-    .player-wrapper {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .player-video-viewport {
-        width: 100%;
-        max-width: 240px;
-    }
-    .controls-row {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-}
-
-
-
-/* Correção de estilo hover para os novos botões industriais injetados */
 #custom-player-container #btn-player-stop:hover,
 #custom-player-container #btn-player-rewind:hover,
 #custom-player-container #btn-player-forward:hover {
@@ -757,180 +706,24 @@ img, video {
     background-color: rgba(6, 182, 212, 0.1) !important;
 }
 
-/* Garante o comportamento flutuante elegante do botão bilíngue */
-.player-recovery-floating-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background-color: #06b6d4;
-    color: #ffffff;
-    border: none;
-    padding: 0.75rem 1.25rem;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.4);
-    z-index: 9998;
-    animation: bounceIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-
 /* ==========================================================================
-   12. MECANISMO DE TOOLTIPS DINÂMICOS POR COORDENADAS (CSS + JS)
-   ========================================================================== */
-.dynamic-player-tooltip {
-    position: relative;
-}
-
-/* Constrói a caixinha flutuante capturando o atributo string injetado via JS */
-.dynamic-player-tooltip::after {
-    content: attr(data-player-tooltip-content);
-    position: absolute;
-    bottom: calc(100% + 10px);
-    /* Lê a variável inline --tooltip-x calculada em tempo real no JS */
-    left: var(--tooltip-x, 50%);
-    transform: translateX(-50%) translateY(4px);
-    background-color: #0f172a;
-    color: #f8fafc;
-    padding: 0.35rem 0.65rem;
-    border-radius: 0.35rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums; /* Evita que os números fiquem tremendo no mousemove */
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: opacity 0.1s ease-out, transform 0.1s ease-out;
-    z-index: 2147483647 !important;
-}
-
-/* Faz a caixinha surgir dinamicamente apenas quando o mouse estiver em cima */
-.dynamic-player-tooltip:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-/* Respiro de espaçamento vertical ideal para a linha do tempo principal */
-.custom-progress-bar-container.dynamic-player-tooltip::after {
-    bottom: calc(100% + 12px);
-}
-
-/* Respiro vertical do tooltip de porcentagem flutuante do volume */
-.volume-control-wrapper.dynamic-player-tooltip::after {
-    bottom: calc(100% + 14px);
-}
-
-
-
-
-/* ==========================================================================
-   12. ESTILIZAÇÃO DO PREVIEW GRÁFICO DE CENA E TOOLTIP DE VOLUME ISOLADO
+   12. PREVIEW GRÁFICO DE CENA E TOOLTIP DE VOLUME ISOLADO NO SLIDER
    ========================================================================== */
 
-/* CONTAINER DO MINI BALÃO DE PREVIEW DE CENA DA TIMELINE */
+/* MINI-JANELA FLUTUANTE DE PREVIEW DE CENA (ACOMPANHA O CURSOR POR CIMA DO OBJETO) */
 .custom-progress-bar-container .timeline-preview-box {
     position: absolute;
-    bottom: calc(100% + 14px); /* Eleva a caixa acima da barra mestre */
+    bottom: calc(100% + 14px); /* Eleva o balão acima da trilha */
     left: var(--preview-x, 0px);
     transform: translateX(-50%);
     background-color: #0f172a;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 0.5rem;
-    padding: 3px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-    display: none; /* Controlado de forma dinâmica via mousemove/mouseleave no JS */
-    pointer-events: none;
-    z-index: 2147483647 !important;
-}
-
-#timeline-preview-canvas {
-    display: block;
-    border-radius: 0.35rem;
-    background-color: #000000;
-}
-
-#timeline-preview-time {
-    display: block;
-    text-align: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #f8fafc;
-    margin-top: 4px;
-    font-variant-numeric: tabular-nums;
-}
-
-/* TOOLTIP ISOLADO EXCLUSIVAMENTE PARA O CURSOR DO SLIDER DE VOLUME */
-.slider-tooltip-container.dynamic-volume-tooltip {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.slider-tooltip-container.dynamic-volume-tooltip::after {
-    content: attr(data-player-tooltip-content);
-    position: absolute;
-    bottom: calc(100% + 12px);
-    left: var(--tooltip-x, 50%);
-    transform: translateX(-50%) translateY(4px);
-    background-color: #0f172a;
-    color: #f8fafc;
-    padding: 0.3rem 0.55rem;
-    border-radius: 0.25rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: opacity 0.1s ease-out, transform 0.1s ease-out;
-    z-index: 2147483647 !important;
-}
-
-.slider-tooltip-container.dynamic-volume-tooltip:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-
-/* ==========================================================================
-   12. ENGENHARIA DE PREVIEW GRÁFICO E TOOLTIP DE VOLUME ISOLADO CORRIGIDO
-   ========================================================================== */
-
-/* Remove travas impostas do contêiner para que os balões flutuem livres por cima */
-.player-fixed-bottom {
-    overflow: visible !important;
-}
-
-.player-wrapper {
-    overflow: visible !important;
-}
-
-.player-controls {
-    overflow: visible !important;
-}
-
-/* MINI-JANELA FLUTUANTE DE PREVIEW DE CENA (FLUTUA POR CIMA DO FILME) */
-.custom-progress-bar-container .timeline-preview-box {
-    position: absolute;
-    bottom: calc(100% + 14px); /* Projeta o balão acima do objeto da barra */
-    left: var(--preview-x, 0px);
-    transform: translateX(-50%);
-    background-color: #0f172a;
-    border: 2px solid #06b6d4; /* Borda em ciano neon contrastante */
+    border: 2px solid #06b6d4; /* Contorno neon identitário */
     border-radius: 0.5rem;
     padding: 4px;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
     display: none; 
     pointer-events: none;
-    z-index: 2147483647 !important; /* Camada suprema sobre qualquer viewport */
+    z-index: 2147483647 !important; /* Camada suprema absoluta */
 }
 
 #timeline-preview-canvas {
@@ -949,12 +742,11 @@ img, video {
     font-variant-numeric: tabular-nums;
 }
 
-/* TOOLTIP DINÂMICO ISOLADO REATIVO EXCLUSIVO DO CORPO DO SLIDER DE VOLUME */
+/* TOOLTIP DINÂMICO ISOLADO EM CSS EM RESPOSTA AO HOVER EXCLUSIVO DO SLIDER */
 .volume-slider-bar.dynamic-volume-slider-tooltip {
     position: relative;
 }
 
-/* Constrói a caixinha em cima do cursor escutando diretamente o input range */
 .volume-slider-bar.dynamic-volume-slider-tooltip::before {
     content: attr(data-player-tooltip-content);
     position: absolute;
@@ -977,10 +769,30 @@ img, video {
     z-index: 2147483647 !important;
 }
 
-/* Dispara o surgimento do balão apenas no hover do slider físico */
 .volume-slider-bar.dynamic-volume-slider-tooltip:hover::before {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   13. RESPONSIVIDADE PARA TELAS MENORES
+   ========================================================================== */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 260px;
+    }
+    .player-wrapper {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .player-video-viewport {
+        width: 100%;
+        max-width: 240px;
+    }
+    .controls-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
 }
 
 
