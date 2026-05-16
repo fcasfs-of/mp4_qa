@@ -9,8 +9,8 @@
     window.VideoPlayerManager = {
         /**
          * Inicializa o Player de Vídeo Avançado fixado no rodapé
-         * @param {string} sourceUrl - URL remota ou ObjectURL do vídeo MP4
-         * @param {string} fileName - Nome identificador do arquivo para controle de reset
+         * @param {string} sourceUrl - URL do arquivo ou ObjectURL Blob
+         * @param {string} fileName - Identificador do arquivo ativo
          */
         create: function(sourceUrl, fileName) {
             this.destroyRecoveryButton(); 
@@ -18,7 +18,6 @@
 
             const currentFileIdentifier = fileName || "video_stream";
 
-            // REGRA DE RESET: Se o nome do arquivo for diferente do anterior, zera o tempo salvo
             if (savedFileName !== currentFileIdentifier) {
                 savedTimeBeforeClose = 0;
             }
@@ -35,7 +34,8 @@
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<video id="custom-video-element" playsinline autoplay src="', sourceUrl, '"></video>',
+                        '<!-- Muted nativo inicial força o navegador a liberar o carregamento do player -->',
+                        '<video id="custom-video-element" playsinline autoplay muted src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
                         '<!-- Barra de Progresso Customizada Original -->',
@@ -57,11 +57,11 @@
                                 '<!-- Botão Retroceder 10s -->',
                                 '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
-                                </button>',
+                                '</button>',
                                 '<!-- Botão Avançar 10s -->',
                                 '<button id="btn-player-forward" aria-label="Avançar 10s" class="player-btn" title="Avançar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>',
-                                </button>',
+                                '</button>',
                                 '<!-- Botão Loop -->',
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
@@ -97,7 +97,7 @@
                                 '<button id="btn-player-lightbox-expand" aria-label="Ampliar no Lightbox" class="player-btn" title="Ampliar Frame no Lightbox">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83l1.41 1.41L19 6.41V10h2V3h-7z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Tela Cheia (Fullscreen) -->',
+                                '<!-- Botão Tela Cheia -->',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
                                 '</button>',
@@ -115,14 +115,18 @@
 
             videoElement.addEventListener('canplay', function onCanPlayReady() {
                 window.VideoPlayerManager.bindEvents();
-                window.VideoPlayerManager.loadSavedPlayerSettings();
                 
                 if (savedTimeBeforeClose > 0) {
                     videoElement.currentTime = savedTimeBeforeClose;
                 }
                 
-                // Correção de inicialização assíncrona blindada
-                videoElement.play().catch(function() {
+                // DISPARO BLINDADO: Inicia mutado e solta o play imediatamente
+                videoElement.play().then(function() {
+                    // O navegador liberou a execução! Agora restauramos as preferências de áudio reais do usuário
+                    window.VideoPlayerManager.loadSavedPlayerSettings();
+                }).catch(function() {
+                    // Caso extremo de bloqueio completo: mantém o player visível em tela aguardando o clique de play
+                    window.VideoPlayerManager.loadSavedPlayerSettings();
                     const btnPlay = playerContainer.querySelector('#btn-player-play');
                     if (btnPlay) btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
                 });
@@ -173,7 +177,6 @@
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
-            // Alternador corrigido Play / Pause
             btnPlay.addEventListener('click', function() {
                 if (videoElement.paused || videoElement.ended) {
                     videoElement.play().then(function() { btnPlay.innerHTML = svgPause; });
@@ -183,24 +186,20 @@
                 }
             });
 
-            // Parar (Stop)
             btnStop.addEventListener('click', function() {
                 videoElement.pause();
                 videoElement.currentTime = 0;
                 btnPlay.innerHTML = svgPlay;
             });
 
-            // Retroceder 10 Segundos
             btnRewind.addEventListener('click', function() {
                 videoElement.currentTime = Math.max(0, videoElement.currentTime - 10);
             });
 
-            // Avançar 10 Segundos
             btnForward.addEventListener('click', function() {
                 videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10);
             });
 
-            // Loop de Repetição
             btnLoop.addEventListener('click', function() {
                 isLooping = !isLooping;
                 videoElement.loop = isLooping;
@@ -336,8 +335,13 @@
                 playerContainer.querySelector('#volume-slider').value = savedVol;
                 videoElement.volume = parseFloat(savedVol);
             }
-            if (savedMuted === 'true') { videoElement.muted = true; }
-            else if (savedMuted === 'false') { videoElement.muted = false; }
+            
+            // Carrega e aplica com precisão a persistência real de mudo configurada pelo usuário
+            if (savedMuted === 'true') {
+                videoElement.muted = true;
+            } else if (savedMuted === 'false') {
+                videoElement.muted = false;
+            }
             
             this.updateVolumeIcon();
         },
