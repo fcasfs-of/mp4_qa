@@ -84,7 +84,7 @@
                                 '</div>',
                             '</div>',
                             '<div class="controls-right">',
-                                '<!-- NOVO: Menu Dinâmico Customizado de Velocidades -->',
+                                '<!-- Menu Dinâmico Customizado de Velocidades -->',
                                 '<div class="player-speed-menu-wrapper" id="speed-menu-container">',
                                     '<button id="btn-player-speed-menu" class="player-btn speed-display-btn" title="Velocidade de Reprodução">',
                                         '1.00x',
@@ -107,7 +107,7 @@
                                 '</button>',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia (Fullscreen)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-                                '</button>',
+                                </button>',
                                 '<button id="btn-player-close" aria-label="Fechar" class="player-btn close-btn">',
                                     '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
                                 '</button>',
@@ -158,7 +158,6 @@
             
             const speedMenuContainer = playerContainer.querySelector('#speed-menu-container');
             const btnSpeedMenu = playerContainer.querySelector('#btn-player-speed-menu');
-            const speedDropdownList = playerContainer.querySelector('#speed-dropdown-list');
             const speedItems = playerContainer.querySelectorAll('.speed-menu-item');
 
             const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
@@ -178,31 +177,25 @@
                 event.preventDefault();
             });
 
-            // LOGICA DO NOVO MENU DE VELOCIDADE CUSTOMIZADO
+            // LOGICA DO MENU DE VELOCIDADE CUSTOMIZADO
             btnSpeedMenu.addEventListener('click', function(e) {
                 e.stopPropagation();
                 speedMenuContainer.classList.toggle('menu-open');
             });
 
-            // Fecha o menu automaticamente se o usuário tirar o mouse de cima do contêiner
             speedMenuContainer.addEventListener('mouseleave', function() {
                 speedMenuContainer.classList.remove('menu-open');
             });
 
-            // Mapeia e escuta o clique nas opções do menu de velocidade
             speedItems.forEach(function(item) {
                 item.addEventListener('click', function() {
                     const speed = parseFloat(item.getAttribute('data-speed'));
                     videoElement.playbackRate = speed;
                     localStorage.setItem('player-setting-speed', speed);
                     
-                    // Atualiza o texto do botão mestre
                     btnSpeedMenu.textContent = speed.toFixed(2) + 'x';
-                    
-                    // Atualiza a classe ativa do item do menu
                     speedItems.forEach(el => el.classList.remove('active-speed'));
                     item.classList.add('active-speed');
-                    
                     speedMenuContainer.classList.remove('menu-open');
                 });
             });
@@ -311,11 +304,46 @@
                 volumeSliderWrapper.removeAttribute('data-player-tooltip-content');
             });
 
-            const handleFullscreenChangeToggle = function() {
-                const fsEl = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-                if (!fsEl) speedMenuContainer.classList.remove('menu-open');
+            // CORREÇÃO DEFINITIVA: LEVA O CONTÊINER INTEIRO PARA O FULLSCREEN EM QUALQUER DISPOSITIVO (PC / ANDROID / IOS)
+            btnFullscreen.addEventListener('click', function() {
+                if (!playerContainer) return;
+
+                const isCurrentlyFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || playerContainer.classList.contains('ios-virtual-fullscreen'));
+
+                if (!isCurrentlyFS) {
+                    if (playerContainer.requestFullscreen) { playerContainer.requestFullscreen(); }
+                    else if (playerContainer.webkitRequestFullscreen) { playerContainer.webkitRequestFullscreen(); }
+                    else if (playerContainer.mozRequestFullScreen) { playerContainer.mozRequestFullScreen(); }
+                    else if (playerContainer.msRequestFullscreen) { playerContainer.msRequestFullscreen(); }
+                    else {
+                        // iOS/iPhone bypass: Emula o Fullscreen integral via CSS na DIV pai
+                        playerContainer.classList.add('ios-virtual-fullscreen');
+                        document.body.style.overflow = 'hidden';
+                    }
+                } else {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
+                    else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                    else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+                    else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+                    
+                    if (playerContainer.classList.contains('ios-virtual-fullscreen')) {
+                        playerContainer.classList.remove('ios-virtual-fullscreen');
+                        document.body.style.overflow = '';
+                    }
+                }
+            });
+
+            const cleanFullscreenStates = function() {
+                const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+                if (!isFS && playerContainer) {
+                    playerContainer.classList.remove('fullscreen-mode-active');
+                } else if (playerContainer) {
+                    playerContainer.classList.add('fullscreen-mode-active');
+                }
+                speedMenuContainer.classList.remove('menu-open');
             };
-            document.addEventListener('fullscreenchange', handleFullscreenChangeToggle);
+            document.addEventListener('fullscreenchange', cleanFullscreenStates);
+            document.addEventListener('webkitfullscreenchange', cleanFullscreenStates);
 
             volumeSlider.addEventListener('input', function(e) {
                 const vol = parseFloat(e.target.value);
@@ -377,7 +405,8 @@
                 if (previewVideoElement) {
                     previewVideoElement.removeEventListener('seeked', renderCanvasPreview);
                 }
-                document.removeEventListener('fullscreenchange', handleFullscreenChangeToggle);
+                document.removeEventListener('fullscreenchange', cleanFullscreenStates);
+                document.removeEventListener('webkitfullscreenchange', cleanFullscreenStates);
                 window.VideoPlayerManager.destroy();
                 window.VideoPlayerManager.createRecoveryButton();
             });
