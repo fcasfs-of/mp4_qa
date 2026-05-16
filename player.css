@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. CONTAINER DO PLAYER FIXO E CONFIGURAÇÕES DE FLUXO MESTRE
+   1. CONTAINER DO PLAYER FIXO E PARAMETROS DE FLUXO MESTRE
    ========================================================================== */
 .player-fixed-bottom {
     position: fixed;
@@ -65,42 +65,30 @@
 }
 
 /* ==========================================================================
-   3. CONTROLES DE REPRODUÇÃO COM OVERFLOW GLOBAL DE SEGURANÇA CONTRA ESTOUROS
+   3. CONTROLES DE REPRODUÇÃO - ARQUITETURA RESPONSIVA ANTI-ESTOURO
    ========================================================================== */
 .controls-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    gap: 1.5rem;
-    
-    /* ENGENHARIA PRINCIPAL: Ativa o deslizamento por swipe horizontal se a tela encolher */
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    flex-wrap: nowrap !important; /* Impede os botões de quebrarem para baixo */
-    padding-bottom: 4px; /* Evita o corte estético das sombras dos botões */
-    
-    /* Garante rolagem fluida por toque em dispositivos de toque (iOS / Android) */
-    -webkit-overflow-scrolling: touch !important;
-    
-    /* Oculta as barras de rolagem nativas para manter a interface premium */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    gap: 1rem;
+    overflow: visible !important;
 }
 
-/* Oculta o trilho de rolagem visual nos motores WebKit (Chrome, Safari, Edge) */
-.controls-row::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-}
-
-.controls-left, .controls-right {
+/* CORREÇÃO MESTRE: Faz os blocos se adaptarem e quebrarem linha se faltar espaço */
+.controls-left, 
+.controls-right {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0 !important; /* Impede que os blocos de botões se esmaguem */
+    flex-wrap: wrap !important; /* Faz os botões descerem de linha em vez de sumirem da tela */
+    gap: 0.5rem 0.75rem !important; /* Espaçamento inteligente (Vertical | Horizontal) */
+    min-width: 0; /* Evita que o contêiner herde larguras rígidas do conteúdo */
     overflow: visible !important;
+}
+
+.controls-right {
+    justify-content: flex-end;
 }
 
 .player-btn {
@@ -115,7 +103,7 @@
     justify-content: center;
     min-width: 36px;
     min-height: 36px;
-    flex-shrink: 0 !important; /* Blindagem contra achatamento de ícones */
+    flex-shrink: 0 !important; /* Impede o navegador de esmagar o tamanho do ícone */
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -145,9 +133,8 @@
     font-size: 0.85rem;
     font-variant-numeric: tabular-nums;
     color: #f8fafc !important;
-    margin-left: 0.5rem;
     white-space: nowrap;
-    flex-shrink: 0 !important;
+    flex-shrink: 0 !important; /* Garante que o relógio nunca suma ou achate os números */
 }
 
 .custom-progress-bar-container {
@@ -496,7 +483,7 @@
    ========================================================================== */
 @media (max-width: 768px) {
     body {
-        padding-bottom: 220px !important; /* Resguarda a base para o rodapé modular */
+        padding-bottom: 260px !important; /* Resguarda a base caso os botões quebrem linha */
     }
 
     .player-fixed-bottom {
@@ -513,20 +500,40 @@
         aspect-ratio: 16 / 9 !important;
     }
 
-    /* Oculta os tooltips de mouse no celular por ausência de ponteiro físico */
+    /* Modifica o row para empilhar os blocos left e right verticalmente se o celular for muito estreito */
+    .controls-row {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Centraliza os botões em suas respectivas linhas de quebra */
+    .controls-left, 
+    .controls-right {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Oculta o slider analógico de volume no mobile para otimizar espaço de tela */
+    .volume-slider-bar {
+        display: none !important;
+    }
+
+    /* Oculta os tooltips de mouse por ausência de ponteiro físico */
     .custom-progress-bar-container .timeline-preview-box,
     .slider-tooltip-container.dynamic-volume-tooltip::after {
         display: none !important;
         opacity: 0 !important;
     }
 
-    /* Ajusta o posicionamento do dropdown para não vazar nas laterais do telefone */
+    /* Mantém o dropdown de velocidades centralizado na tela do celular */
     .player-speed-dropdown-list {
         right: auto !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
     }
 }
+
 
 
 
