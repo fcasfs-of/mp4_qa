@@ -1,6 +1,7 @@
 (function() {
     let playerContainer = null;
     let videoElement = null;
+    let previewVideoElement = null; // Vídeo fantasma oculto em memória para renderizar os previews de cena
     let isLooping = false;
     let savedVideoUrl = ""; 
     let savedFileName = ""; 
@@ -38,12 +39,16 @@
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<!-- Muted nativo inicial garante o bypass de segurança do autoplay do navegador -->',
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
-                        '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico -->',
-                        '<div class="custom-progress-bar-container dynamic-player-tooltip" id="progress-bar-root">',
+                        '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico de Cena -->',
+                        '<div class="custom-progress-bar-container dynamic-timeline-tooltip" id="progress-bar-root">',
+                            '<!-- Contêiner Flutuante do Preview de Cena -->',
+                            '<div class="timeline-preview-box" id="timeline-preview-window">',
+                                '<canvas id="timeline-preview-canvas" width="120" height="68"></canvas>',
+                                '<span id="timeline-preview-time">00:00:00</span>',
+                            '</div>',
                             '<div class="progress-bar-buffered" id="progress-buffered"></div>',
                             '<div class="progress-bar-fill" id="progress-fill"></div>',
                             '<div class="progress-bar-handle" id="progress-handle"></div>',
@@ -65,11 +70,15 @@
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
                                 '</button>',
-                                '<div class="volume-control-wrapper dynamic-player-tooltip" id="volume-tooltip-root">',
+                                '<!-- Controle de Volume -->',
+                                '<div class="volume-control-wrapper">',
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
                                     '</button>',
-                                    '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
+                                    '<!-- Tooltip Isolado estritamente no corpo do Input do Slider -->',
+                                    '<div class="slider-tooltip-container dynamic-volume-tooltip" id="volume-slider-wrapper">',
+                                        '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
+                                    '</div>',
                                 '</div>',
                                 '<div class="time-display-container" id="time-display-click-root" style="cursor:pointer; user-select:none;">',
                                     '<span id="player-time-display">00:00:00 / 00:00:00</span>',
@@ -109,7 +118,12 @@
             document.body.appendChild(playerContainer);
             videoElement = document.getElementById('custom-video-element');
 
-            // FUNÇÃO FORÇADA DE IGNIÇÃO COM RESGATE DE HISTÓRICO
+            // Instancia o elemento oculto em segundo plano focado nas capturas de quadros da timeline
+            previewVideoElement = document.createElement('video');
+            previewVideoElement.src = sourceUrl;
+            previewVideoElement.muted = true;
+            previewVideoElement.preload = 'auto';
+
             const forceStartPlayerPipeline = function() {
                 window.VideoPlayerManager.bindEvents();
                 
@@ -126,11 +140,9 @@
                 });
             };
 
-            // BLINDAGEM COMPLETA ANTI-ATRAZO: Se a memória do navegador já carregou o vídeo, inicia na hora
             if (videoElement.readyState >= 1) {
                 forceStartPlayerPipeline();
             } else {
-                // Caso contrário, aguarda o primeiro sinal de carregamento disponível
                 videoElement.addEventListener('loadedmetadata', forceStartPlayerPipeline, { once: true });
             }
         },
@@ -150,9 +162,13 @@
             const volumeSlider = playerContainer.querySelector('#volume-slider');
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
-            const volumeTooltipRoot = playerContainer.querySelector('#volume-tooltip-root');
             
+            const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
+            const previewWindow = playerContainer.querySelector('#timeline-preview-window');
+            const previewCanvas = playerContainer.querySelector('#timeline-preview-canvas');
+            const previewTimeSpan = playerContainer.querySelector('#timeline-preview-time');
+            
             const progressFill = playerContainer.querySelector('#progress-fill');
             const progressBuffered = playerContainer.querySelector('#progress-buffered');
             const progressHandle = playerContainer.querySelector('#progress-handle');
@@ -211,29 +227,47 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
+            // GERAÇÃO DO PREVIEW GRÁFICO DE CENA DA TIMELINE COM SEVENT-DRIVEN DE RENDERIZAÇÃO
             progressRoot.addEventListener('mousemove', function(e) {
-                if (!videoElement.duration) return;
+                if (!videoElement.duration || !previewVideoElement) return;
+                
                 const rect = progressRoot.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
                 pct = Math.min(Math.max(pct, 0), 1);
                 
                 const timeAtCursor = pct * videoElement.duration;
-                const formattedTime = window.VideoPlayerManager.formatTime(timeAtCursor);
                 
-                progressRoot.setAttribute('data-player-tooltip-content', formattedTime);
+                // Atualiza a agulha lógica do player fantasma oculto
+                previewVideoElement.currentTime = timeAtCursor;
+                
+                // Desenha os pixels correspondentes no mini canvas flutuante
+                const ctx = previewCanvas.getContext('2d');
+                ctx.drawImage(previewVideoElement, 0, 0, previewCanvas.width, previewCanvas.height);
+                
+                // Injeta o carimbo de tempo formatado na caixa suspensa
+                previewTimeSpan.textContent = window.VideoPlayerManager.formatTime(timeAtCursor);
+                
+                // Posiciona e rastreia o movimento geométrico horizontal do mouse em tempo real
                 const relativeX = e.clientX - rect.left;
-                progressRoot.style.setProperty('--tooltip-x', relativeX + 'px');
+                previewWindow.style.setProperty('--preview-x', relativeX + 'px');
+                previewWindow.style.display = 'block';
             });
 
+            progressRoot.addEventListener('mouseleave', function() {
+                previewWindow.style.display = 'none'; // Oculta a mini-janela ao retirar o mouse
+            });
+
+            // TOOLTIP DE VOLUME ISOLADO EXCLUSIVO NO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
                 pct = Math.min(Math.max(pct, 0), 1);
                 
                 const percentage = Math.round(pct * 100) + "%";
-                volumeTooltipRoot.setAttribute('data-player-tooltip-content', percentage);
-                const relativeX = e.clientX - rect.left + 36; 
-                volumeTooltipRoot.style.setProperty('--tooltip-x', relativeX + 'px');
+                volumeSliderWrapper.setAttribute('data-player-tooltip-content', percentage);
+                
+                const relativeX = e.clientX - rect.left; 
+                volumeSliderWrapper.style.setProperty('--tooltip-x', relativeX + 'px');
             });
 
             btnExpandLightbox.addEventListener('click', function() {
@@ -271,7 +305,7 @@
                 localStorage.setItem('player-setting-muted', vol === 0 ? 'true' : 'false');
                 
                 const percentage = Math.round(vol * 100) + "%";
-                volumeTooltipRoot.setAttribute('data-player-tooltip-content', percentage);
+                volumeSliderWrapper.setAttribute('data-player-tooltip-content', percentage);
             });
 
             btnMute.addEventListener('click', function() {
@@ -430,10 +464,15 @@
                     videoElement.src = "";
                     videoElement.load();
                 }
+                if (previewVideoElement) {
+                    previewVideoElement.src = "";
+                    previewVideoElement.load();
+                }
                 playerContainer.parentNode.removeChild(playerContainer);
             }
             playerContainer = null;
             videoElement = null;
+            previewVideoElement = null;
             isLooping = false;
         }
     };
