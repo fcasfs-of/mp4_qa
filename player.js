@@ -37,14 +37,8 @@
 
             playerContainer.innerHTML = [
                 '<div class="player-wrapper">',
-                    '<!-- Viewport Visual de Renderização com Botões de Expansão Interna -->',
+                    '<!-- Viewport Visual de Renderização - Miniatura Fixa Padrão -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<button id="btn-viewport-expand" class="viewport-floating-action-btn" title="Expandir Tela do Vídeo">',
-                            '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-                        '</button>',
-                        '<button id="btn-viewport-compress" class="viewport-floating-action-btn" title="Retornar ao Normal" style="display:none;">',
-                            '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
-                        '</button>',
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
@@ -66,7 +60,7 @@
                                 '</button>',
                                 '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar (Stop)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>',
-                                </button>',
+                                '</button>',
                                 '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
                                 '</button>',
@@ -105,7 +99,6 @@
                                         '<option value="3">3.00x</option>',
                                     '</select>',
                                 '</div>',
-                                '<!-- REMOVIDO: Botão antigo de expandir no Lightbox -->',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia (Fullscreen)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
                                 '</button>',
@@ -126,27 +119,19 @@
             previewVideoElement.muted = true;
             previewVideoElement.preload = 'auto';
 
-            const forceStartPlayerPipeline = function() {
-                window.VideoPlayerManager.bindEvents();
-                
-                if (savedTimeBeforeClose > 0) {
-                    videoElement.currentTime = savedTimeBeforeClose;
-                }
-                
-                videoElement.play().then(function() {
-                    window.VideoPlayerManager.loadSavedPlayerSettings();
-                }).catch(function() {
-                    window.VideoPlayerManager.loadSavedPlayerSettings();
-                    const btnPlay = playerContainer.querySelector('#btn-player-play');
-                    if (btnPlay) btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
-                });
-            };
-
-            if (videoElement.readyState >= 1) {
-                forceStartPlayerPipeline();
-            } else {
-                videoElement.addEventListener('loadedmetadata', forceStartPlayerPipeline, { once: true });
+            window.VideoPlayerManager.bindEvents();
+            
+            if (savedTimeBeforeClose > 0) {
+                videoElement.currentTime = savedTimeBeforeClose;
             }
+            
+            videoElement.play().then(function() {
+                window.VideoPlayerManager.loadSavedPlayerSettings();
+            }).catch(function() {
+                window.VideoPlayerManager.loadSavedPlayerSettings();
+                const btnPlay = playerContainer.querySelector('#btn-player-play');
+                if (btnPlay) btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+            });
         },
 
         bindEvents: function() {
@@ -164,9 +149,6 @@
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
             
-            const viewport = playerContainer.querySelector('#player-viewport');
-            const btnVpExpand = playerContainer.querySelector('#btn-viewport-expand');
-            const btnVpCompress = playerContainer.querySelector('#btn-viewport-compress');
             const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
             const previewWindow = playerContainer.querySelector('#timeline-preview-window');
@@ -195,19 +177,6 @@
 
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-
-            // LOGICA CORRIGIDA: DESTAQUE DE CINEMA EM TELA CHEIA (SEM TRAVAS FIXED)
-            btnVpExpand.addEventListener('click', function(e) {
-                viewport.classList.add('mode-viewport-expanded');
-                btnVpExpand.style.setProperty('display', 'none', 'important');
-                btnVpCompress.style.setProperty('display', 'flex', 'important');
-            });
-
-            btnVpCompress.addEventListener('click', function(e) {
-                viewport.classList.remove('mode-viewport-expanded');
-                btnVpCompress.style.setProperty('display', 'none', 'important');
-                btnVpExpand.style.setProperty('display', 'flex', 'important');
-            });
 
             btnPlay.addEventListener('click', function() {
                 if (videoElement.paused || videoElement.ended) {
@@ -244,7 +213,7 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
-            // PREVIEW GRÁFICO DE CENA DA TIMELINE COORDENADO PELO MOUSE
+            // PREVIEW GRÁFICO DE CENA DA TIMELINE
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
                 
@@ -270,7 +239,7 @@
                 previewWindow.style.display = 'none'; 
             });
 
-            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
+            // TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
