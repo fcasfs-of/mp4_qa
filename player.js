@@ -1,7 +1,7 @@
 (function() {
     let playerContainer = null;
     let videoElement = null;
-    let previewVideoElement = null; // Vídeo fantasma oculto em memória para renderizar os previews de cena
+    let previewVideoElement = null; 
     let isLooping = false;
     let savedVideoUrl = ""; 
     let savedFileName = ""; 
@@ -37,10 +37,21 @@
 
             playerContainer.innerHTML = [
                 '<div class="player-wrapper">',
-                    '<!-- Viewport Visual de Renderização -->',
+                    '<!-- Viewport Visual de Renderização com Botões Flutuantes Superiores -->',
                     '<div id="player-viewport" class="player-video-viewport">',
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
+                        
+                        '<!-- NOVO: Botão para Fixar/Expandir no Topo Direito -->',
+                        '<button id="btn-player-pin-top" class="viewport-overlay-btn" title="Fixar no Topo / Pin to Top">',
+                            '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 11h-8v6h8v-6zm4 8V5c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 0H3V5h18v14z"/></svg>',
+                        '</button>',
+                        
+                        '<!-- NOVO: Botão para Voltar ao Normal (Rodapé) -->',
+                        '<button id="btn-player-unpin" class="viewport-overlay-btn d-none" title="Voltar ao Normal / Restore Down">',
+                            '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V7h14v12z"/></svg>',
+                        '</button>',
                     '</div>',
+                    
                     '<div class="player-controls" id="player-custom-controls-ui">',
                         '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico de Cena -->',
                         '<div class="custom-progress-bar-container" id="progress-bar-root">',
@@ -75,7 +86,6 @@
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
                                     '</button>',
-                                    '<!-- Contêiner pai preparado para renderizar o tooltip flutuante sem quebras por cima -->',
                                     '<div class="slider-tooltip-container dynamic-volume-tooltip" id="volume-slider-wrapper">',
                                         '<input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="volume-slider-bar">',
                                     '</div>',
@@ -118,7 +128,6 @@
             document.body.appendChild(playerContainer);
             videoElement = document.getElementById('custom-video-element');
 
-            // Instancia o elemento oculto em segundo plano focado nas capturas de quadros da timeline
             previewVideoElement = document.createElement('video');
             previewVideoElement.src = sourceUrl;
             previewVideoElement.muted = true;
@@ -163,6 +172,10 @@
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
             
+            // NOVO: Seletores para os gatilhos superiores de fixação
+            const btnPinTop = playerContainer.querySelector('#btn-player-pin-top');
+            const btnUnpin = playerContainer.querySelector('#btn-player-unpin');
+
             const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
             const previewWindow = playerContainer.querySelector('#timeline-preview-window');
@@ -180,12 +193,34 @@
                 event.preventDefault();
             });
 
+            // NOVO: Evento para Mudar para o Modo Fixado no Topo
+            btnPinTop.addEventListener('click', function(e) {
+                e.stopPropagation();
+                playerContainer.classList.add('player-pinned-top-right');
+                btnPinTop.classList.add('d-none');
+                btnUnpin.classList.remove('d-none');
+            });
+
+            // NOVO: Evento para Voltar ao Modo Normal (Rodapé)
+            btnUnpin.addEventListener('click', function(e) {
+                e.stopPropagation();
+                playerContainer.classList.remove('player-pinned-top-right');
+                btnUnpin.classList.add('d-none');
+                btnPinTop.classList.remove('d-none');
+            });
+
             const handleFullscreenChange = function() {
                 const fsEl = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
                 if (fsEl === playerContainer) {
                     playerContainer.classList.add('fullscreen-mode-active');
+                    // Remove fixação temporariamente ao entrar em tela cheia cheia para não quebrar
+                    playerContainer.classList.remove('player-pinned-top-right');
                 } else {
                     playerContainer.classList.remove('fullscreen-mode-active');
+                    // Se os botões indicavam que estava fixado, restaura o estado ao sair do fullscreen
+                    if (btnPinTop.classList.contains('d-none')) {
+                        playerContainer.classList.add('player-pinned-top-right');
+                    }
                 }
             };
 
@@ -227,7 +262,6 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
-            // GERAÇÃO DO PREVIEW GRÁFICO DE CENA DA TIMELINE COORDENADO PELO MOUSE
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
                 
@@ -252,7 +286,6 @@
                 previewWindow.style.display = 'none'; 
             });
 
-            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO CONTÊINER DO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
@@ -281,17 +314,6 @@
                     window.LightboxManager.open(frameDataUrl, 'player_snapshot');
                 } catch(e) {
                     console.error(e);
-                }
-            });
-
-            btnFullscreen.addEventListener('click', function() {
-                if (!playerContainer) return;
-                const isCurrentlyFS = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-                if (!isCurrentlyFS) {
-                    if (playerContainer.requestFullscreen) { playerContainer.requestFullscreen(); }
-                    else if (playerContainer.webkitRequestFullscreen) { playerContainer.webkitRequestFullscreen(); }
-                } else {
-                    if (document.exitFullscreen) { document.exitFullscreen(); }
                 }
             });
 
