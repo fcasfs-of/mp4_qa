@@ -8,9 +8,9 @@
 
     window.VideoPlayerManager = {
         /**
-         * Inicializa o Player de Vídeo Avançado fixado no rodapé
-         * @param {string} sourceUrl - URL do arquivo ou ObjectURL Blob
-         * @param {string} fileName - Identificador do arquivo ativo
+         * Força a criação e exibição imediata do player no rodapé
+         * @param {string} sourceUrl - URL ou ObjectURL do arquivo de vídeo
+         * @param {string} fileName - Nome do arquivo para controle de histórico
          */
         create: function(sourceUrl, fileName) {
             this.destroyRecoveryButton(); 
@@ -28,14 +28,18 @@
             playerContainer = document.createElement('div');
             playerContainer.id = 'custom-player-container';
             playerContainer.className = 'player-fixed-bottom';
-            playerContainer.style.display = 'block';
+            
+            // Força a visibilidade física absoluta por CSS Inline imediato
+            playerContainer.style.setProperty('display', 'block', 'important');
+            playerContainer.style.setProperty('visibility', 'visible', 'important');
+            playerContainer.style.setProperty('opacity', '1', 'important');
 
             playerContainer.innerHTML = [
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<!-- Muted nativo inicial força o navegador a liberar o carregamento do player -->',
-                        '<video id="custom-video-element" playsinline autoplay muted src="', sourceUrl, '"></video>',
+                        '<!-- ATRIBUTOS CRÍTICOS MANDATÓRIOS CONTRA BLOQUEIOS NATIVOS -->',
+                        '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
                         '<!-- Barra de Progresso Customizada Original -->',
@@ -46,27 +50,21 @@
                         '</div>',
                         '<div class="controls-row">',
                             '<div class="controls-left">',
-                                '<!-- Botão Play/Pause -->',
                                 '<button id="btn-player-play" aria-label="Play/Pause" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Parar (Stop) -->',
                                 '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Retroceder 10s -->',
                                 '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Avançar 10s -->',
                                 '<button id="btn-player-forward" aria-label="Avançar 10s" class="player-btn" title="Avançar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Loop -->',
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
-                                </button>',
-                                '<!-- Controle de Volume -->',
+                                '</button>',
                                 '<div class="volume-control-wrapper">',
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
@@ -93,11 +91,9 @@
                                         '<option value="3">3.00x</option>',
                                     '</select>',
                                 '</div>',
-                                '<!-- Botão Ampliar no Lightbox -->',
                                 '<button id="btn-player-lightbox-expand" aria-label="Ampliar no Lightbox" class="player-btn" title="Ampliar Frame no Lightbox">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83l1.41 1.41L19 6.41V10h2V3h-7z"/></svg>',
                                 '</button>',
-                                '<!-- Botão Tela Cheia -->',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
                                 '</button>',
@@ -113,25 +109,28 @@
             document.body.appendChild(playerContainer);
             videoElement = document.getElementById('custom-video-element');
 
-            videoElement.addEventListener('canplay', function onCanPlayReady() {
+            // Barramento de ignição forçado imediato por escuta direta de dados carregados
+            videoElement.addEventListener('loadeddata', function onLoadedDataForce() {
                 window.VideoPlayerManager.bindEvents();
                 
                 if (savedTimeBeforeClose > 0) {
                     videoElement.currentTime = savedTimeBeforeClose;
                 }
                 
-                // DISPARO BLINDADO: Inicia mutado e solta o play imediatamente
-                videoElement.play().then(function() {
-                    // O navegador liberou a execução! Agora restauramos as preferências de áudio reais do usuário
-                    window.VideoPlayerManager.loadSavedPlayerSettings();
-                }).catch(function() {
-                    // Caso extremo de bloqueio completo: mantém o player visível em tela aguardando o clique de play
-                    window.VideoPlayerManager.loadSavedPlayerSettings();
-                    const btnPlay = playerContainer.querySelector('#btn-player-play');
-                    if (btnPlay) btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
-                });
-                
-                videoElement.removeEventListener('canplay', onCanPlayReady);
+                // Forçamento de execução contornado em modo silencioso contra políticas de segurança
+                const playPromise = videoElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(function() {
+                        // Restaura as preferências reais de áudio do usuário se liberado
+                        window.VideoPlayerManager.loadSavedPlayerSettings();
+                    }).catch(function() {
+                        // Se o navegador bloquear, mantém o layout aberto e renderiza o ícone de Play correto
+                        window.VideoPlayerManager.loadSavedPlayerSettings();
+                        const btnPlay = playerContainer.querySelector('#btn-player-play');
+                        if (btnPlay) btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+                    });
+                }
+                videoElement.removeEventListener('loadeddata', onLoadedDataForce);
             });
 
             videoElement.load();
@@ -335,13 +334,8 @@
                 playerContainer.querySelector('#volume-slider').value = savedVol;
                 videoElement.volume = parseFloat(savedVol);
             }
-            
-            // Carrega e aplica com precisão a persistência real de mudo configurada pelo usuário
-            if (savedMuted === 'true') {
-                videoElement.muted = true;
-            } else if (savedMuted === 'false') {
-                videoElement.muted = false;
-            }
+            if (savedMuted === 'true') { videoElement.muted = true; }
+            else if (savedMuted === 'false') { videoElement.muted = false; }
             
             this.updateVolumeIcon();
         },
