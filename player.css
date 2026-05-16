@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. CONTAINER DO PLAYER FIXO E PARÂMETROS DE TRANSBORDO (ANTI-ESTOURO)
+   1. CONTAINER DO PLAYER FIXO E CONFIGURAÇÕES DE FLUXO MESTRE
    ========================================================================== */
 .player-fixed-bottom {
     position: fixed;
@@ -65,20 +65,42 @@
 }
 
 /* ==========================================================================
-   3. CONTROLES DE REPRODUÇÃO E LINHA DO TEMPO
+   3. CONTROLES DE REPRODUÇÃO COM OVERFLOW GLOBAL DE SEGURANÇA CONTRA ESTOUROS
    ========================================================================== */
 .controls-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    gap: 1rem;
+    gap: 1.5rem;
+    
+    /* ENGENHARIA PRINCIPAL: Ativa o deslizamento por swipe horizontal se a tela encolher */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    flex-wrap: nowrap !important; /* Impede os botões de quebrarem para baixo */
+    padding-bottom: 4px; /* Evita o corte estético das sombras dos botões */
+    
+    /* Garante rolagem fluida por toque em dispositivos de toque (iOS / Android) */
+    -webkit-overflow-scrolling: touch !important;
+    
+    /* Oculta as barras de rolagem nativas para manter a interface premium */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Oculta o trilho de rolagem visual nos motores WebKit (Chrome, Safari, Edge) */
+.controls-row::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .controls-left, .controls-right {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-shrink: 0 !important; /* Impede que os blocos de botões se esmaguem */
+    overflow: visible !important;
 }
 
 .player-btn {
@@ -89,9 +111,11 @@
     padding: 0.5rem;
     border-radius: 0.375rem;
     display: flex;
-    flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+    flex-shrink: 0 !important; /* Blindagem contra achatamento de ícones */
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -123,6 +147,7 @@
     color: #f8fafc !important;
     margin-left: 0.5rem;
     white-space: nowrap;
+    flex-shrink: 0 !important;
 }
 
 .custom-progress-bar-container {
@@ -174,6 +199,7 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    flex-shrink: 0 !important;
 }
 
 .volume-slider-bar {
@@ -181,6 +207,7 @@
     height: 4px;
     cursor: pointer;
     accent-color: #06b6d4;
+    flex-shrink: 0 !important;
 }
 
 /* ==========================================================================
@@ -190,6 +217,7 @@
     position: relative;
     display: inline-block;
     overflow: visible !important;
+    flex-shrink: 0 !important;
 }
 
 .player-btn.speed-display-btn {
@@ -464,141 +492,42 @@
 }
 
 /* ==========================================================================
-   8. MEDIA QUERY INDUSTRIAL: RESPONSIVIDADE ERGONÔMICA NO MOBILE (BLINDADO)
+   8. COMPATIBILIDADE ERGONÔMICA PARA TELAS MENORES (MOBILE SAFE)
    ========================================================================== */
 @media (max-width: 768px) {
-    /* Abre espaço dinâmico na base da página para o player empilhado verticalmente */
     body {
-        padding-bottom: 240px !important;
+        padding-bottom: 220px !important; /* Resguarda a base para o rodapé modular */
     }
 
-    /* Calibração de segurança do contêiner para o rodapé mobile */
     .player-fixed-bottom {
-        padding: 0.5rem 0.75rem !important;
-        max-height: 220px !important;
-        overflow: visible !important; /* Mantém os menus flutuantes visíveis para cima */
+        padding: 0.75rem 1rem !important;
     }
 
-    /* Organiza a estrutura principal em coluna centralizada */
     .player-wrapper {
         flex-direction: column !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        width: 100% !important;
+        gap: 0.75rem !important;
     }
 
-    /* Reduz proporcionalmente a miniatura para dar prioridade à linha do tempo e botões */
     .player-video-viewport {
-        width: 120px !important;
+        width: 140px !important;
         aspect-ratio: 16 / 9 !important;
-        border-radius: 0.25rem !important;
     }
 
-    /* Barra de progresso ocupa o espaço horizontal total com segurança */
-    .custom-progress-bar-container {
-        width: 100% !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    /* Quebra a linha mestre em duas sub-linhas de controle fluidas */
-    .controls-row {
-        flex-direction: column !important;
-        gap: 0.5rem !important;
-        width: 100% !important;
-        overflow: visible !important;
-    }
-
-    /* CRÍTICO: Implementa barra de rolagem horizontal invisível por swipe contra estouros */
-    .controls-left, 
-    .controls-right {
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important; /* Impede a quebra de linha interna dos botões */
-        justify-content: flex-start !important; /* Alinha do início para permitir rolagem fluida */
-        align-items: center !important;
-        gap: 0.5rem !important;
-        
-        /* Ativa o overflow horizontal com rolagem de toque nativa suave */
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        padding-bottom: 4px !important; /* Abre margem fina para evitar corte de sombras */
-        
-        /* Suporte a física de arrasto de dedo premium (iOS/Android) */
-        webkit-overflow-scrolling: touch !important;
-        
-        /* Oculta a barra de rolagem estética visual padrão para manter o design limpo */
-        scrollbar-width: none; /* Firefox */
-        ms-overflow-style: none; /* IE 10+ */
-    }
-
-    /* Oculta as barras de rolagem nativas no Chrome, Safari e Edge */
-    .controls-left::-webkit-scrollbar,
-    .controls-right::-webkit-scrollbar {
-        display: none !important;
-        width: 0 !important;
-        height: 0 !important;
-    }
-
-    /* Força tamanho fixo estável para os botões não encolherem ou deformarem na rolagem */
-    .player-btn {
-        padding: 0.5rem !important;
-        min-width: 42px !important;
-        max-width: 42px !important;
-        min-height: 42px !important;
-        max-height: 42px !important;
-        flex-shrink: 0 !important; /* Impede o navegador de esmagar o botão */
-    }
-
-    /* Mantém o botão de exibição textual da velocidade visível na linha horizontal */
-    .player-btn.speed-display-btn {
-        min-width: 58px !important;
-        max-width: 58px !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* Isola o display de cronometragem sem sumir e sem quebrar pixels */
-    .time-display-container {
-        margin-left: 0.25rem !important;
-        font-size: 0.75rem !important;
-        flex-shrink: 0 !important;
-        white-space: nowrap !important;
-    }
-
-    /* Remove o slider analógico de volume para otimizar espaço de tela (mudo funciona por clique) */
-    .volume-slider-bar {
-        display: none !important;
-    }
-
-    /* Calibração espacial para o menu flutuante abrir no centro horizontal do celular */
-    .player-speed-dropdown-list {
-        right: auto !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: calc(100% + 8px) !important;
-    }
-    
-    .player-speed-menu-wrapper.menu-open .player-speed-dropdown-list {
-        transform: translateX(-50%) translateY(0) !important;
-    }
-
-    /* Garante blindagem anti-hover para anular miniaturas fantasmas geradas por toque involuntário */
+    /* Oculta os tooltips de mouse no celular por ausência de ponteiro físico */
     .custom-progress-bar-container .timeline-preview-box,
     .slider-tooltip-container.dynamic-volume-tooltip::after {
         display: none !important;
         opacity: 0 !important;
     }
+
+    /* Ajusta o posicionamento do dropdown para não vazar nas laterais do telefone */
+    .player-speed-dropdown-list {
+        right: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
 }
 
-/* Tratamento fino extra para telas ultra-estreitas (Ex: iPhone SE) */
-@media (max-width: 380px) {
-    .time-display-container {
-        font-size: 0.75rem !important;
-    }
-    .player-btn {
-        padding: 0.5rem !important;
-    }
-}
 
 
 
