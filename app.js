@@ -6,66 +6,79 @@
         /**
          * Executa o cruzamento de variáveis e calcula o score técnico do vídeo (0 a 100)
          */
-        analyzeVideo: function(width, height, fileSize, duration) {
+        analyzeVideo: function(width, height, fileSize, duration, lang) {
             if (!width || !height) {
-                return { title: 'Desconhecido', score: 0, color: '#ef4444', desc: 'Sinal de vídeo corrompido ou trilha visual ausente.' };
+                return { 
+                    title: lang === 'en' ? 'Unknown' : 'Desconhecido', 
+                    score: 0, 
+                    color: '#ef4444', 
+                    desc: lang === 'en' ? 'Corrupted video signal or missing visual track.' : 'Sinal de vídeo corrompido ou trilha visual ausente.' 
+                };
             }
 
             const totalPixels = width * height;
-            let score = 40; // Pontuação base inicial
+            let score = 40; 
 
-            // Heurística de Resolução Física (Peso: 50%)
-            if (totalPixels >= 3840 * 2160) score = 85;      // 4K Ultra HD
-            else if (totalPixels >= 1920 * 1080) score = 75; // Full HD 1080p
-            else if (totalPixels >= 1280 * 720) score = 60;  // HD 720p
-            else if (totalPixels >= 854 * 480) score = 45;   // SD 480p
+            // Heurística de Resolução Física
+            if (totalPixels >= 3840 * 2160) score = 85;      
+            else if (totalPixels >= 1920 * 1080) score = 75; 
+            else if (totalPixels >= 1280 * 720) score = 60;  
+            else if (totalPixels >= 854 * 480) score = 45;   
 
-            // Heurística de Taxa de Bits / Compressão Dinâmica (Peso: 50%)
+            // Heurística de Taxa de Bits / Compressão Dinâmica
             if (fileSize > 0 && duration > 0) {
                 const bitrateMbps = ((fileSize * 8) / duration) / 1000000;
-                
-                // Bonificação por densidade de dados limpos (Bitrate Saudável)
                 if (totalPixels >= 1920 * 1080 && bitrateMbps >= 12) score += 15;
                 else if (totalPixels >= 1280 * 720 && bitrateMbps >= 5) score += 10;
                 else if (bitrateMbps >= 2) score += 5;
-                else score -= 10; // Penalidade por macroblocos de compressão severa
+                else score -= 10; 
             }
 
             score = Math.min(Math.max(score, 0), 100);
 
-            let title = 'Baixa Resolução / Altamente Comprimido';
+            let title = '';
             let color = '#ef4444';
-            let desc = 'Imagem com compressão agressiva e perda crítica de texturas finas. Recomendado apenas para economia rigorosa de dados móveis.';
+            let desc = '';
 
             if (score >= 85) {
-                title = 'Alta Resolução / Excelente'; color = '#16a34a';
-                desc = 'Fidelidade visual extrema. Presença de texturas cristalinas e nitidez cromática impecável, ideal para displays modernos.';
+                title = lang === 'en' ? 'High Resolution / Excellent' : 'Alta Resolução / Excelente'; 
+                color = '#16a34a';
+                desc = lang === 'en' ? 'Extreme visual fidelity. Crisp textures and flawless color sharpness, ideal for modern high-density displays.' : 'Fidelidade visual extrema. Presença de texturas cristalinas e nitidez cromática impecável, ideal para displays modernos.';
             } else if (score >= 60) {
-                title = 'Resolução Padrão / Boa'; color = '#ca8a04';
-                desc = 'Qualidade equilibrada e estável para distribuição web. Boa visibilidade, com raros artefatos perceptíveis apenas em movimentações rápidas.';
+                title = lang === 'en' ? 'Standard Resolution / Good' : 'Resolução Padrão / Boa'; 
+                color = '#ca8a04';
+                desc = lang === 'en' ? 'Balanced and stable quality for web distribution. Good visibility, with rare artifacts noticeable only in fast motion scenes.' : 'Qualidade equilibrada e estável para distribuição web. Boa visibilidade, com raros artefatos perceptíveis apenas em movimentações rápidas.';
+            } else {
+                title = lang === 'en' ? 'Low Resolution / Highly Compressed' : 'Baixa Resolução / Altamente Comprimido';
+                color = '#ef4444';
+                desc = lang === 'en' ? 'Aggressive compression with critical loss of fine textures. Recommended strictly for mobile data saving use cases.' : 'Imagem com compressão agressiva e perda crítica de texturas finas. Recomendado apenas para economia rigorosa de dados móveis.';
             }
 
             return { title: title, score: score, color: color, desc: desc, info: width + 'x' + height };
         },
 
         /**
-         * Executa o cálculo de fidelidade acústica baseada em canais
+         * Executa o cálculo de fidelidade acústica baseada em canais com suporte bilingue
          */
-        analyzeAudio: function(audioTrack) {
+        analyzeAudio: function(audioTrack, lang) {
             let score = 70; 
-            let title = 'Estéreo Padrão / Bom';
+            let title = lang === 'en' ? 'Standard Stereo / Good' : 'Estéreo Padrão / Bom';
             let color = '#ca8a04';
-            let desc = 'Som estéreo limpo com separação satisfatória dos canais esquerdo e direito. Excelente clareza vocal para o consumo de streaming diário.';
-            let info = '2 Ch (Stereo)';
+            let desc = lang === 'en' ? 'Clean stereo sound with satisfactory separation of left and right channels. Excellent vocal clarity for daily streaming.' : 'Som estéreo limpo com separação satisfatória dos canais esquerdo e direito. Excelente clareza vocal para o consumo de streaming diário.';
+            let info = lang === 'en' ? '2 Ch (Stereo)' : '2 Ch (Estéreo)';
 
             if (audioTrack && audioTrack.channels) {
                 if (audioTrack.channels > 2) {
-                    score = 90; title = 'Alta Fidelidade / Excelente'; color = '#16a34a';
-                    desc = 'Áudio imersivo multicanal surround de nível teatral. Resposta de frequência expandida com reprodução cristalina.';
+                    score = 90; 
+                    title = lang === 'en' ? 'High Fidelity / Excellent' : 'Alta Fidelidade / Excelente'; 
+                    color = '#16a34a';
+                    desc = lang === 'en' ? 'Immersive multi-channel surround sound. Expanded frequency response with crystal clear bass and treble reproduction.' : 'Áudio imersivo multicanal surround de nível teatral. Resposta de frequência expandida com reprodução cristalina de graves e agudos.';
                     info = audioTrack.channels + ' Ch (Surround)';
                 } else if (audioTrack.channels === 1) {
-                    score = 45; title = 'Monofônico / Baixa Qualidade'; color = '#ef4444';
-                    desc = 'Áudio misturado em canal único. Ausência de profundidade espacial e abafamento perceptível nas frequências mais altas.';
+                    score = 45; 
+                    title = lang === 'en' ? 'Monophonic / Low Quality' : 'Monofônico / Baixa Qualidade'; 
+                    color = '#ef4444';
+                    desc = lang === 'en' ? 'Audio mixed into a single channel. Complete lack of spatial depth and noticeable muffling at higher frequencies.' : 'Áudio misturado em canal único. Ausência de profundidade espacial e abafamento perceptível nas frequências mais altas.';
                     info = '1 Ch (Mono)';
                 }
             }
@@ -98,11 +111,11 @@
             'title-metadata': 'Technical Quality Diagnostics',
             'btn-save-thumb': 'Save Thumbnail',
             'btn-save-meta': 'Save Diagnostics',
-            'alert-error': 'Error processing file. Please ensure it is a valid .mp4 file.',
+            'alert-error': 'Error processing video file. Please ensure it is a valid .mp4 file.',
             'v-quality': 'Video Quality',
             'a-quality': 'Audio Quality',
-            'quality-desc': 'AI Diagnostics:',
-            'quality-metrics': 'Analyzed Metrics:'
+            'quality-desc': 'Diagnostics Verdict:',
+            'quality-metrics': 'Hardware Structure:'
         }
     };
 
@@ -125,6 +138,7 @@
 
     function applyLanguage() {
         const pack = Dictionary[currentLanguage];
+        document.documentElement.setAttribute('lang', currentLanguage); // Atualiza o atributo global para o player ler
         document.querySelectorAll('[data-i18n]').forEach(function(el) {
             const key = el.getAttribute('data-i18n');
             if (pack[key]) el.textContent = pack[key];
@@ -179,11 +193,10 @@
     }
 
     // ----------------------------------------------------------------------
-    // 3. PIPELINE DE PROCESSAMENTO EXCLUSIVO LOCAL E EXTRAÇÃO ASSÍNCRONA
+    // 3. PIPELINE DE PROCESSAMENTO LOCAL E EXTRAÇÃO ASSÍNCRONA
     // ----------------------------------------------------------------------
     function handleFilesList(filesList) {
-        // CORREÇÃO CRÍTICA: Extrai cirurgicamente o primeiro arquivo indexado (posição [0]) da lista do input
-        const file = filesList[0];
+        const file = filesList[0]; // Captura com segurança o primeiro arquivo individual
         if (!file) return;
 
         const objectUrl = URL.createObjectURL(file);
@@ -205,10 +218,8 @@
             metaDataStructure.height = videoElementContainer.videoHeight;
             metaDataStructure.duration = videoElementContainer.duration;
             
-            // CORREÇÃO CRÍTICA PROTEGIDA ANTI-TRAVAMENTO (CHROMIUM SAFE)
-            let detectedChannels = 2; // Fallback estéreo seguro por padrão
+            let detectedChannels = 2; 
             try {
-                // Tenta mapear os canais. Se o navegador travar, o catch absorve o erro e mantém o script de pé
                 if (videoElementContainer.audioTracks && videoElementContainer.audioTracks.length > 0) {
                     detectedChannels = videoElementContainer.audioTracks.length;
                 }
@@ -217,8 +228,6 @@
             }
             
             metaDataStructure.audioTrackInfo = { channels: detectedChannels };
-            
-            // Pula 5% estáveis para evitar capturas de quadros totalmente pretos
             videoElementContainer.currentTime = Math.min(1.0, videoElementContainer.duration * 0.05);
         });
 
@@ -237,8 +246,9 @@
                 activePayload = metaDataStructure;
                 renderUI(metaDataStructure);
 
+                // ATUALIZAÇÃO: Envia o nome do arquivo original para resetar o tempo do player caso mude de vídeo
                 if (window.VideoPlayerManager) {
-                    window.VideoPlayerManager.create(mediaUrl);
+                    window.VideoPlayerManager.create(mediaUrl, metaDataStructure.name);
                 }
             } catch(e) {
                 console.error("Erro gráfico ao gerar a miniatura:", e);
@@ -251,15 +261,16 @@
     }
 
     // ----------------------------------------------------------------------
-    // 4. INJEÇÃO DA INTERFACE DE DIAGNÓSTICO
+    // 4. INJEÇÃO DA INTERFACE DE DIAGNÓSTICO BILINGUE REATIVA
     // ----------------------------------------------------------------------
     function renderUI(metadata) {
         const div = document.getElementById('metadata-display');
         const pack = Dictionary[currentLanguage];
         let h = '';
 
-        const videoReport = QualityEngine.analyzeVideo(metadata.width, metadata.height, metadata.sizeBytes, metadata.duration);
-        const audioReport = QualityEngine.analyzeAudio(metadata.audioTrackInfo);
+        // Passa a linguagem ativa atual para traduzir o motor de análise reativamente
+        const videoReport = QualityEngine.analyzeVideo(metadata.width, metadata.height, metadata.sizeBytes, metadata.duration, currentLanguage);
+        const audioReport = QualityEngine.analyzeAudio(metadata.audioTrackInfo, currentLanguage);
 
         h += '<div class="metadata-group group-video" style="border-left-color: ' + videoReport.color + ';">';
         h += '  <div class="track-header"><h4>' + pack['v-quality'] + '</h4><span class="track-badge" style="background-color: ' + videoReport.color + ';">Video</span></div>';
