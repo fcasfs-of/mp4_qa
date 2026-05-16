@@ -9,12 +9,20 @@
     let showRemainingTime = false; 
 
     window.VideoPlayerManager = {
+        /**
+         * Inicializa o Player de Vídeo Avançado fixado no rodapé
+         * @param {string} sourceUrl - URL remota ou ObjectURL do vídeo MP4
+         * @param {string} fileName - Nome identificador do arquivo para controle de reset
+         */
         create: function(sourceUrl, fileName) {
             this.destroyRecoveryButton(); 
             this.destroy();
 
             const currentFileIdentifier = fileName || "video_stream";
-            if (savedFileName !== currentFileIdentifier) { savedTimeBeforeClose = 0; }
+
+            if (savedFileName !== currentFileIdentifier) {
+                savedTimeBeforeClose = 0;
+            }
 
             savedVideoUrl = sourceUrl;
             savedFileName = currentFileIdentifier;
@@ -31,13 +39,18 @@
                 '<div class="player-wrapper">',
                     '<!-- Viewport Visual de Renderização com Botões de Expansão Interna -->',
                     '<div id="player-viewport" class="player-video-viewport">',
-                        '<button id="btn-viewport-expand" class="viewport-floating-action-btn" title="Expandir no Lightbox">',
+                        '<button id="btn-viewport-expand" class="viewport-floating-action-btn" title="Expandir Tela do Vídeo">',
                             '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
+                        '</button>',
+                        '<button id="btn-viewport-compress" class="viewport-floating-action-btn" title="Retornar ao Normal" style="display:none;">',
+                            '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
                         '</button>',
                         '<video id="custom-video-element" playsinline autoplay muted preload="auto" src="', sourceUrl, '"></video>',
                     '</div>',
                     '<div class="player-controls" id="player-custom-controls-ui">',
+                        '<!-- Barra de Progresso Customizada Original com Tooltip Dinâmico de Cena -->',
                         '<div class="custom-progress-bar-container" id="progress-bar-root">',
+                            '<!-- Contêiner Flutuante do Preview de Cena -->',
                             '<div class="timeline-preview-box" id="timeline-preview-window">',
                                 '<canvas id="timeline-preview-canvas" width="120" height="68"></canvas>',
                                 '<span id="timeline-preview-time">00:00:00</span>',
@@ -53,7 +66,7 @@
                                 '</button>',
                                 '<button id="btn-player-stop" aria-label="Parar" class="player-btn" title="Parar (Stop)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>',
-                                '</button>',
+                                </button>',
                                 '<button id="btn-player-rewind" aria-label="Retroceder 10s" class="player-btn" title="Voltar 10s">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
                                 '</button>',
@@ -63,6 +76,7 @@
                                 '<button id="btn-player-loop" aria-label="Loop" class="player-btn">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
                                 '</button>',
+                                '<!-- Controle de Volume -->',
                                 '<div class="volume-control-wrapper">',
                                     '<button id="btn-player-mute" class="player-btn" aria-label="Mute Toggle">',
                                         '<svg id="icon-volume" viewBox="0 0 24 24" width="18" height="18"></svg>',
@@ -91,12 +105,10 @@
                                         '<option value="3">3.00x</option>',
                                     '</select>',
                                 '</div>',
-                                '<button id="btn-player-lightbox-expand" aria-label="Ampliar no Lightbox" class="player-btn" title="Capturar Frame no Lightbox">',
-                                    '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83l1.41 1.41L19 6.41V10h2V3h-7z"/></svg>',
-                                '</button>',
+                                '<!-- REMOVIDO: Botão antigo de expandir no Lightbox -->',
                                 '<button id="btn-player-fullscreen" aria-label="Tela Cheia" class="player-btn" title="Tela Cheia (Fullscreen)">',
                                     '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-                                </button>',
+                                '</button>',
                                 '<button id="btn-player-close" aria-label="Fechar" class="player-btn close-btn">',
                                     '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
                                 '</button>',
@@ -116,7 +128,11 @@
 
             const forceStartPlayerPipeline = function() {
                 window.VideoPlayerManager.bindEvents();
-                if (savedTimeBeforeClose > 0) { videoElement.currentTime = savedTimeBeforeClose; }
+                
+                if (savedTimeBeforeClose > 0) {
+                    videoElement.currentTime = savedTimeBeforeClose;
+                }
+                
                 videoElement.play().then(function() {
                     window.VideoPlayerManager.loadSavedPlayerSettings();
                 }).catch(function() {
@@ -126,8 +142,11 @@
                 });
             };
 
-            if (videoElement.readyState >= 1) { forceStartPlayerPipeline(); } 
-            else { videoElement.addEventListener('loadedmetadata', forceStartPlayerPipeline, { once: true }); }
+            if (videoElement.readyState >= 1) {
+                forceStartPlayerPipeline();
+            } else {
+                videoElement.addEventListener('loadedmetadata', forceStartPlayerPipeline, { once: true });
+            }
         },
 
         bindEvents: function() {
@@ -139,14 +158,15 @@
             const btnForward = playerContainer.querySelector('#btn-player-forward');
             const btnLoop = playerContainer.querySelector('#btn-player-loop');
             const btnMute = playerContainer.querySelector('#btn-player-mute');
-            const btnExpandLightbox = playerContainer.querySelector('#btn-player-lightbox-expand');
             const btnFullscreen = playerContainer.querySelector('#btn-player-fullscreen');
             const btnClose = playerContainer.querySelector('#btn-player-close');
             const volumeSlider = playerContainer.querySelector('#volume-slider');
             const speedSelect = playerContainer.querySelector('#player-speed-select');
             const timeDisplayClickRoot = playerContainer.querySelector('#time-display-click-root');
             
+            const viewport = playerContainer.querySelector('#player-viewport');
             const btnVpExpand = playerContainer.querySelector('#btn-viewport-expand');
+            const btnVpCompress = playerContainer.querySelector('#btn-viewport-compress');
             const volumeSliderWrapper = playerContainer.querySelector('#volume-slider-wrapper');
             const progressRoot = playerContainer.querySelector('#progress-bar-root');
             const previewWindow = playerContainer.querySelector('#timeline-preview-window');
@@ -160,13 +180,33 @@
             const svgPlay = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
             const svgPause = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-            // NOVO REQUISITO: TRANSPLANTE DO PLAYER DO RODAPÉ DIRETO PARA DENTRO DO LIGHTBOX
-            btnVpExpand.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (window.LightboxManager) {
-                    // Abre o Lightbox passando a referência física do nó do Player inteiro
-                    window.LightboxManager.openWithPlayer(playerContainer);
+            playerContainer.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+            });
+
+            const handleFullscreenChange = function() {
+                const fsEl = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+                if (fsEl === playerContainer) {
+                    playerContainer.classList.add('fullscreen-mode-active');
+                } else {
+                    playerContainer.classList.remove('fullscreen-mode-active');
                 }
+            };
+
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+            // LOGICA CORRIGIDA: DESTAQUE DE CINEMA EM TELA CHEIA (SEM TRAVAS FIXED)
+            btnVpExpand.addEventListener('click', function(e) {
+                viewport.classList.add('mode-viewport-expanded');
+                btnVpExpand.style.setProperty('display', 'none', 'important');
+                btnVpCompress.style.setProperty('display', 'flex', 'important');
+            });
+
+            btnVpCompress.addEventListener('click', function(e) {
+                viewport.classList.remove('mode-viewport-expanded');
+                btnVpCompress.style.setProperty('display', 'none', 'important');
+                btnVpExpand.style.setProperty('display', 'flex', 'important');
             });
 
             btnPlay.addEventListener('click', function() {
@@ -184,8 +224,13 @@
                 btnPlay.innerHTML = svgPlay;
             });
 
-            btnRewind.addEventListener('click', function() { videoElement.currentTime = Math.max(0, videoElement.currentTime - 10); });
-            btnForward.addEventListener('click', function() { videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10); });
+            btnRewind.addEventListener('click', function() {
+                videoElement.currentTime = Math.max(0, videoElement.currentTime - 10);
+            });
+
+            btnForward.addEventListener('click', function() {
+                videoElement.currentTime = Math.min(videoElement.duration, videoElement.currentTime + 10);
+            });
 
             btnLoop.addEventListener('click', function() {
                 isLooping = !isLooping;
@@ -199,8 +244,10 @@
                 window.VideoPlayerManager.updateTimeDisplay();
             });
 
+            // PREVIEW GRÁFICO DE CENA DA TIMELINE COORDENADO PELO MOUSE
             progressRoot.addEventListener('mousemove', function(e) {
                 if (!videoElement.duration || !previewVideoElement) return;
+                
                 const rect = progressRoot.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
                 pct = Math.min(Math.max(pct, 0), 1);
@@ -213,36 +260,42 @@
                 ctx.drawImage(previewVideoElement, 0, 0, previewCanvas.width, previewCanvas.height);
                 
                 previewTimeSpan.textContent = window.VideoPlayerManager.formatTime(timeAtCursor);
+                
                 const relativeX = e.clientX - rect.left;
                 previewWindow.style.setProperty('--preview-x', relativeX + 'px');
                 previewWindow.style.display = 'block';
             });
 
-            progressRoot.addEventListener('mouseleave', function() { previewWindow.style.display = 'none'; });
+            progressRoot.addEventListener('mouseleave', function() {
+                previewWindow.style.display = 'none'; 
+            });
 
+            // RASTREAMENTO DO TOOLTIP DE VOLUME REATIVO NO PAI DO SLIDER
             volumeSlider.addEventListener('mousemove', function(e) {
                 const rect = volumeSlider.getBoundingClientRect();
                 let pct = (e.clientX - rect.left) / rect.width;
                 pct = Math.min(Math.max(pct, 0), 1);
+                
                 const percentage = Math.round(pct * 100) + "%";
                 volumeSliderWrapper.setAttribute('data-player-tooltip-content', percentage);
+                
                 const relativeX = e.clientX - rect.left; 
                 volumeSliderWrapper.style.setProperty('--tooltip-x', relativeX + 'px');
             });
 
-            volumeSlider.addEventListener('mouseleave', function() { volumeSliderWrapper.removeAttribute('data-player-tooltip-content'); });
+            volumeSlider.addEventListener('mouseleave', function() {
+                volumeSliderWrapper.removeAttribute('data-player-tooltip-content');
+            });
 
-            btnExpandLightbox.addEventListener('click', function() {
-                if (!videoElement || !window.LightboxManager) return;
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = videoElement.videoWidth || 640;
-                    canvas.height = videoElement.videoHeight || 360;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    const frameDataUrl = canvas.toDataURL('image/png');
-                    window.LightboxManager.open(frameDataUrl, 'player_snapshot');
-                } catch(e) { console.error(e); }
+            btnFullscreen.addEventListener('click', function() {
+                if (!playerContainer) return;
+                const isCurrentlyFS = (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+                if (!isCurrentlyFS) {
+                    if (playerContainer.requestFullscreen) { playerContainer.requestFullscreen(); }
+                    else if (playerContainer.webkitRequestFullscreen) { playerContainer.webkitRequestFullscreen(); }
+                } else {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
+                }
             });
 
             volumeSlider.addEventListener('input', function(e) {
@@ -252,6 +305,7 @@
                 window.VideoPlayerManager.updateVolumeIcon();
                 localStorage.setItem('player-setting-volume', vol);
                 localStorage.setItem('player-setting-muted', vol === 0 ? 'true' : 'false');
+                
                 const percentage = Math.round(vol * 100) + "%";
                 volumeSliderWrapper.setAttribute('data-player-tooltip-content', percentage);
             });
@@ -286,9 +340,18 @@
                 videoElement.currentTime = pct * videoElement.duration;
             };
 
-            progressRoot.addEventListener('mousedown', function(e) { isDraggingProgress = true; seekMedia(e.clientX); });
-            window.addEventListener('mousemove', function(e) { if (isDraggingProgress) seekMedia(e.clientX); });
-            window.addEventListener('mouseup', function() { isDraggingProgress = false; });
+            progressRoot.addEventListener('mousedown', function(e) {
+                isDraggingProgress = true;
+                seekMedia(e.clientX);
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (isDraggingProgress) seekMedia(e.clientX);
+            });
+
+            window.addEventListener('mouseup', function() {
+                isDraggingProgress = false;
+            });
 
             speedSelect.addEventListener('change', function(e) {
                 const speed = parseFloat(e.target.value);
@@ -307,9 +370,13 @@
             if (!videoElement || !playerContainer) return;
             const displaySpan = playerContainer.querySelector('#player-time-display');
             if (!displaySpan || !videoElement.duration) return;
-            const current = videoElement.currentTime, total = videoElement.duration;
+
+            const current = videoElement.currentTime;
+            const total = videoElement.duration;
+
             if (showRemainingTime) {
-                displaySpan.textContent = "-" + this.formatTime(total - current) + " / " + this.formatTime(total);
+                const remaining = total - current;
+                displaySpan.textContent = "-" + this.formatTime(remaining) + " / " + this.formatTime(total);
             } else {
                 displaySpan.textContent = this.formatTime(current) + " / " + this.formatTime(total);
             }
@@ -319,9 +386,13 @@
             if (!videoElement || !playerContainer) return;
             const path = playerContainer.querySelector('#icon-volume');
             if (!path) return;
-            if (videoElement.muted || videoElement.volume === 0) {
+
+            const isMuted = videoElement.muted;
+            const currentVolume = videoElement.volume;
+
+            if (isMuted || currentVolume === 0) {
                 path.innerHTML = '<path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
-            } else if (videoElement.volume < 0.5) {
+            } else if (currentVolume < 0.5) {
                 path.innerHTML = '<path fill="currentColor" d="M12 4L7 9H3v6h4l5 5V4zm2.5 8c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
             } else {
                 path.innerHTML = '<path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
@@ -330,45 +401,81 @@
 
         loadSavedPlayerSettings: function() {
             if (!videoElement || !playerContainer) return;
-            const savedSpeed = localStorage.getItem('player-setting-speed'), savedLoop = localStorage.getItem('player-setting-loop'), savedVol = localStorage.getItem('player-setting-volume'), savedMuted = localStorage.getItem('player-setting-muted');
-            if (savedSpeed) { playerContainer.querySelector('#player-speed-select').value = savedSpeed; videoElement.playbackRate = parseFloat(savedSpeed); }
-            if (savedLoop === 'true') { isLooping = true; videoElement.loop = true; playerContainer.querySelector('#btn-player-loop').classList.add('active-control'); }
-            if (savedVol !== null) { playerContainer.querySelector('#volume-slider').value = savedVol; videoElement.volume = parseFloat(savedVol); }
-            if (savedMuted === 'true') { videoElement.muted = true; } else if (savedMuted === 'false') { videoElement.muted = false; }
+            const savedSpeed = localStorage.getItem('player-setting-speed');
+            const savedLoop = localStorage.getItem('player-setting-loop');
+            const savedVol = localStorage.getItem('player-setting-volume');
+            const savedMuted = localStorage.getItem('player-setting-muted');
+
+            if (savedSpeed) {
+                playerContainer.querySelector('#player-speed-select').value = savedSpeed;
+                videoElement.playbackRate = parseFloat(savedSpeed);
+            }
+            if (savedLoop === 'true') {
+                isLooping = true;
+                videoElement.loop = true;
+                playerContainer.querySelector('#btn-player-loop').classList.add('active-control');
+            }
+            if (savedVol !== null) {
+                playerContainer.querySelector('#volume-slider').value = savedVol;
+                videoElement.volume = parseFloat(savedVol);
+            }
+            if (savedMuted === 'true') { videoElement.muted = true; }
+            else if (savedMuted === 'false') { videoElement.muted = false; }
+            
             this.updateVolumeIcon();
         },
 
         createRecoveryButton: function() {
             if (document.getElementById('btn-player-recovery') || !savedVideoUrl) return;
+
             const activeLang = document.documentElement.getAttribute('lang') || localStorage.getItem('meta-lang') || 'pt';
             const buttonText = (activeLang.indexOf('en') !== -1) ? 'Open Player' : 'Abrir Player';
+
             const recBtn = document.createElement('button');
             recBtn.id = 'btn-player-recovery';
             recBtn.className = 'player-recovery-floating-btn';
             recBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" style="margin-right:6px;"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> ' + buttonText;
-            recBtn.addEventListener('click', function() { window.VideoPlayerManager.create(savedVideoUrl, savedFileName); });
+            
+            recBtn.addEventListener('click', function() {
+                window.VideoPlayerManager.create(savedVideoUrl, savedFileName);
+            });
+
             document.body.appendChild(recBtn);
         },
 
         destroyRecoveryButton: function() {
             const recBtn = document.getElementById('btn-player-recovery');
-            if (recBtn && recBtn.parentNode) { recBtn.parentNode.removeChild(recBtn); }
+            if (recBtn && recBtn.parentNode) {
+                recBtn.parentNode.removeChild(recBtn);
+            }
         },
 
         formatTime: function(seconds) {
             if (isNaN(seconds) || seconds === Infinity || seconds < 0) return "00:00:00";
-            const hrs = Math.floor(seconds / 3600), mins = Math.floor((seconds % 3600) / 60), secs = Math.floor(seconds % 60);
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
             const pad = function(n) { return String(n).padStart(2, '0'); };
             return pad(hrs) + ":" + pad(mins) + ":" + pad(secs);
         },
 
         destroy: function() {
             if (playerContainer && playerContainer.parentNode) {
-                if (videoElement) { videoElement.pause(); videoElement.src = ""; videoElement.load(); }
-                if (previewVideoElement) { previewVideoElement.src = ""; previewVideoElement.load(); }
+                if (videoElement) {
+                    videoElement.pause();
+                    videoElement.src = "";
+                    videoElement.load();
+                }
+                if (previewVideoElement) {
+                    previewVideoElement.src = "";
+                    previewVideoElement.load();
+                }
                 playerContainer.parentNode.removeChild(playerContainer);
             }
-            playerContainer = null; videoElement = null; previewVideoElement = null; isLooping = false;
+            playerContainer = null;
+            videoElement = null;
+            previewVideoElement = null;
+            isLooping = false;
         }
     };
 })();
