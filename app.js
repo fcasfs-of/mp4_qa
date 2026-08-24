@@ -290,12 +290,6 @@
     }
 
     init();
-})();
-
-
-
-
-
 
 var cokk_plu_idf="pt";
 
@@ -354,5 +348,10 @@ function injetarScriptHome(isHead) {
 
 
 injetarScriptHome(false);
+
+    
+})();
+
+
 
 
